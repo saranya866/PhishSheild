@@ -6,14 +6,14 @@
 ![HTML](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Claude AI](https://img.shields.io/badge/Claude_AI-Powered-bf7fff?style=for-the-badge)
+
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 ---
 
 ## 🔴 Live Demo
 
-> **[▶ Launch PhishShield](https://your-username.github.io/phishshield)**
+> **[▶ Launch PhishShield](https://saranya866.github.io/PhishShield)**
 
 
 
