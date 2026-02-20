@@ -133,7 +133,6 @@ phishshield/
 ├── index.html          # Complete single-file application (HTML + CSS + JS)
 ├── README.md           # This file
 ├── LICENSE             # MIT License
-├── CONTRIBUTING.md     # How to contribute
 ├── .gitignore          # Git ignore rules
 │
 └── docs/
