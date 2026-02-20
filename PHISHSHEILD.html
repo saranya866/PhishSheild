@@ -1,0 +1,2449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhishShield — Advanced Phishing Awareness Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@700;900&family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#050a14; --bg2:#080f1e; --bg3:#0d1a30;
+  --card:rgba(12,24,52,0.78); --border:rgba(0,200,255,0.13);
+  --bh:rgba(0,200,255,0.48); --text:#deeeff; --muted:#607898;
+  --acc:#00c8ff; --grn:#00ff9d; --red:#ff3366; --ylw:#ffcc00; --pur:#bf7fff;
+  --org:#ff7b3b;
+  --glass:rgba(5,12,30,0.9);
+  --neon:0 0 18px rgba(0,200,255,0.35);
+  --ng:0 0 18px rgba(0,255,157,0.35);
+  --nr:0 0 18px rgba(255,51,102,0.35);
+}
+[data-theme=light]{
+  --bg:#eef4ff; --bg2:#e0eaff; --bg3:#d0dfff;
+  --card:rgba(255,255,255,0.88); --border:rgba(0,90,200,0.14);
+  --bh:rgba(0,90,200,0.4); --text:#071428; --muted:#3a5480;
+  --acc:#0055cc; --grn:#008855; --red:#cc0033; --ylw:#886600; --pur:#7733cc;
+  --glass:rgba(224,234,255,0.94);
+  --neon:0 4px 18px rgba(0,90,200,0.16);
+  --ng:0 4px 18px rgba(0,130,80,0.16);
+  --nr:0 4px 18px rgba(180,0,50,0.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Space Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;
+  background-image:radial-gradient(ellipse at 10% 15%,rgba(0,100,200,0.07) 0%,transparent 55%),
+  radial-gradient(ellipse at 90% 85%,rgba(0,200,140,0.05) 0%,transparent 55%),
+  linear-gradient(rgba(0,200,255,0.015) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,200,255,0.015) 1px,transparent 1px);
+  background-size:100% 100%,100% 100%,46px 46px,46px 46px;
+  transition:background .3s,color .3s}
+[data-theme=light] body{background-image:radial-gradient(ellipse at 10% 15%,rgba(0,80,180,0.06) 0%,transparent 55%),radial-gradient(ellipse at 90% 85%,rgba(0,160,110,0.04) 0%,transparent 55%)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+a{color:var(--acc);text-decoration:none}
+input,textarea,select,button{font-family:'Space Mono',monospace}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+@keyframes glow{0%,100%{box-shadow:var(--neon)}50%{box-shadow:0 0 36px rgba(0,200,255,.7)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes pop{0%{transform:scale(.8);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes pulse-badge{0%,100%{box-shadow:0 0 0 0 rgba(255,51,102,0.3)}50%{box-shadow:0 0 0 6px rgba(255,51,102,0)}}
+
+/* ---- LAYOUT ---- */
+.page{display:none;animation:fadeIn .35s ease}.page.active{display:block}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px}
+.wrap-sm{max-width:800px;margin:0 auto;padding:0 18px}
+.wrap-xs{max-width:540px;margin:0 auto;padding:0 18px}
+
+/* ---- NAV ---- */
+#nav{position:sticky;top:0;z-index:300;background:var(--glass);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;transition:background .3s}
+.nav-logo{display:flex;align-items:center;gap:9px;cursor:pointer}
+.nav-logo-txt{font-family:'Orbitron',monospace;font-weight:900;font-size:15px;color:var(--acc);letter-spacing:2px}
+.nav-logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;display:none}
+@media(min-width:680px){.nav-logo-sub{display:inline}}
+.nav-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tmbtn{background:transparent;border:1px solid var(--border);border-radius:6px;padding:5px 7px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .2s}
+.tmbtn.on,.tmbtn:hover{border-color:var(--acc);color:var(--acc);background:rgba(0,200,255,.08)}
+.nl{background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 10px;cursor:pointer;color:var(--muted);font-size:11px;transition:all .2s}
+.nl:hover,.nl.on{border-color:var(--acc);color:var(--acc)}
+.nav-user-chip{display:flex;align-items:center;gap:7px;padding:5px 11px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);font-size:11px;color:var(--text)}
+.auth-btn{background:linear-gradient(135deg,var(--acc),#0044bb);color:#fff;border:none;border-radius:7px;padding:7px 16px;cursor:pointer;font-size:12px;box-shadow:var(--neon);transition:opacity .2s}
+.auth-btn:hover{opacity:.85}
+#nav-in{display:none;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* ---- CARDS ---- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(16px);padding:22px;transition:border-color .25s,transform .25s}
+.card-hov:hover{border-color:var(--bh);transform:translateY(-3px);cursor:pointer}
+
+/* ---- BUTTONS ---- */
+.btn{background:linear-gradient(135deg,var(--acc),#0055cc);color:#fff;border:none;border-radius:8px;padding:11px 22px;cursor:pointer;font-size:13px;box-shadow:var(--neon);transition:opacity .2s,transform .1s;font-family:'Space Mono',monospace;font-weight:bold}
+.btn:hover{opacity:.87;transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-g{background:linear-gradient(135deg,var(--grn),#005533);box-shadow:var(--ng)}
+.btn-r{background:linear-gradient(135deg,var(--red),#880022);box-shadow:var(--nr)}
+.btn-y{background:linear-gradient(135deg,var(--ylw),#886600);box-shadow:0 0 18px rgba(255,204,0,.3)}
+.btn-p{background:linear-gradient(135deg,var(--pur),#5500aa);box-shadow:0 0 18px rgba(191,127,255,.3)}
+.btn-o{background:transparent;color:var(--acc);border:1px solid var(--acc);border-radius:8px;padding:11px 22px;cursor:pointer;font-size:13px;font-family:'Space Mono',monospace;transition:all .2s}
+.btn-o:hover{background:rgba(0,200,255,.1)}
+
+/* ---- INPUTS ---- */
+.inp{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;width:100%;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--acc)}.inp::placeholder{color:var(--muted);opacity:.65}
+.pw-wrap{position:relative}.pw-wrap .inp{padding-right:42px}
+.pw-eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px}
+
+/* ---- NOTIFICATION ---- */
+#notif{position:fixed;top:70px;right:18px;z-index:999;padding:10px 18px;border-radius:8px;font-size:12px;backdrop-filter:blur(16px);display:none;max-width:300px;animation:slideR .3s ease}
+#notif.show{display:block}
+#notif.ok{background:rgba(0,255,157,.1);border:1px solid var(--grn);color:var(--grn);box-shadow:var(--ng)}
+#notif.err{background:rgba(255,51,102,.1);border:1px solid var(--red);color:var(--red);box-shadow:var(--nr)}
+
+/* ---- TAGS ---- */
+.tag{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:10px;font-size:9px;font-weight:bold;letter-spacing:1px;border:1px solid currentColor}
+.tag-e{color:var(--grn);background:rgba(0,255,157,.1)}.tag-m{color:var(--ylw);background:rgba(255,204,0,.1)}.tag-h{color:var(--red);background:rgba(255,51,102,.1)}.tag-a{color:var(--acc);background:rgba(0,200,255,.1)}
+
+/* ---- PROGRESS ---- */
+.prog{background:var(--bg3);border-radius:4px;height:5px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--acc),var(--grn));transition:width .6s ease}
+
+/* ---- EMAIL ---- */
+.email-box{font-family:'Space Mono','Courier New',monospace}
+.email-hdr{border-bottom:1px solid var(--border);padding-bottom:13px;margin-bottom:13px}
+.ef{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
+.el{font-size:10px;color:var(--muted);min-width:62px;padding-top:2px;letter-spacing:1px}
+.ebody{font-size:13px;line-height:1.85;color:var(--text);white-space:pre-wrap}
+
+/* ---- XRAY ---- */
+.xr{position:relative;display:inline}.xr-lnk{color:var(--acc);border-bottom:2px dashed var(--red);cursor:pointer;font-size:13px}
+.xr-tip{display:none;position:absolute;top:26px;left:0;z-index:90;background:var(--bg3);border:2px solid var(--red);border-radius:10px;padding:12px 14px;min-width:300px;box-shadow:0 0 28px rgba(255,51,102,.4);animation:fadeIn .2s ease}
+.xr:hover .xr-tip{display:block}
+.xr-ttl{font-size:10px;color:var(--red);font-weight:bold;margin-bottom:7px}
+.xr-row{font-size:11px;margin-bottom:3px}.xr-ml{color:var(--muted)}.xr-bad{color:var(--red);font-weight:bold;word-break:break-all}.xr-good{color:var(--grn);font-weight:bold}
+.xr-warn{margin-top:7px;background:rgba(255,51,102,.1);border-radius:5px;padding:5px 8px;font-size:10px;color:var(--red)}
+.xr-safe{margin-top:7px;background:rgba(0,255,157,.1);border-radius:5px;padding:5px 8px;font-size:10px;color:var(--grn)}
+
+/* ---- RED FLAGS ---- */
+.rf-panel{background:rgba(255,51,102,.06);border:1px solid rgba(255,51,102,.28);border-radius:10px;padding:13px;margin-bottom:13px}
+.rf-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
+.rf-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:4px}
+.rf-type{font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(255,51,102,.18);color:var(--red);font-weight:bold;letter-spacing:1px}
+
+/* ---- FEEDBACK ---- */
+.fb-ok{background:rgba(0,255,157,.06);border:1px solid rgba(0,255,157,.32);border-radius:10px;padding:15px;margin-bottom:13px}
+.fb-err{background:rgba(255,51,102,.06);border:1px solid rgba(255,51,102,.32);border-radius:10px;padding:15px;margin-bottom:13px}
+
+/* ---- LEADERBOARD ---- */
+.lb-row{display:grid;grid-template-columns:52px 1fr 108px 72px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,200,255,.05)}
+.lb-hdr{border-bottom:1px solid var(--border)!important;padding-bottom:8px!important}
+.lb-me{background:rgba(0,200,255,.06);border-radius:7px;padding:10px 8px!important}
+
+/* ---- MODAL ---- */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+.modal-bg.open{display:flex;animation:fadeIn .2s ease}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:26px;width:90%;max-width:500px;animation:pop .3s ease;max-height:90vh;overflow-y:auto}
+
+/* ---- HERO ---- */
+.hero{text-align:center;padding:68px 18px 52px;max-width:800px;margin:0 auto}
+.hero-t{font-family:'Orbitron',monospace;font-size:clamp(36px,7vw,76px);font-weight:900;line-height:1;background:linear-gradient(135deg,var(--acc) 0%,var(--grn) 50%,var(--acc) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
+.hero-s{font-size:clamp(14px,2.5vw,20px);color:var(--muted);letter-spacing:5px;margin-bottom:20px}
+.hero-d{font-size:13px;color:var(--muted);line-height:1.85;margin-bottom:34px}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--red);color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.15em;padding:.35rem .9rem;border-radius:2px;margin-bottom:1.5rem;animation:pulse-badge 2.5s infinite}
+
+/* ---- GAMES ---- */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:5px}
+
+/* ---- TABS ---- */
+.tabs{display:flex;gap:6px;margin-bottom:18px}.tab{background:transparent;border:1px solid var(--border);border-radius:7px;padding:7px 15px;cursor:pointer;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;transition:all .2s}.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ---- ROLE BTNS ---- */
+.rbtn{background:transparent;border:1px solid var(--border);border-radius:18px;padding:5px 13px;cursor:pointer;color:var(--muted);font-size:11px;transition:all .2s;font-family:'Space Mono',monospace}
+.rbtn.on,.rbtn:hover{border-color:var(--acc);color:var(--acc);background:rgba(0,200,255,.08)}
+
+/* GAME CARDS */
+.game-card{position:relative;overflow:hidden}
+.game-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(0,200,255,.04));pointer-events:none}
+
+/* PHISH MATCH GRID */
+.mc{height:80px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;padding:8px;border:2px solid var(--border);background:var(--bg3);transition:all .3s;user-select:none}
+.mc:hover{border-color:var(--acc);background:rgba(0,200,255,.08)}
+.mc.flipped{border-color:var(--acc);background:rgba(0,200,255,.12)}
+.mc.matched{border-color:var(--grn);background:rgba(0,255,157,.12);cursor:default;animation:pop .3s ease}
+.mc.wrong{border-color:var(--red);animation:shake .4s ease}
+
+/* SE GAME */
+.se-choice{width:100%;text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;cursor:pointer;color:var(--text);font-size:12px;margin-bottom:8px;transition:all .2s;font-family:'Space Mono',monospace}
+.se-choice:hover{border-color:var(--acc);background:rgba(0,200,255,.07)}
+.se-choice.correct{border-color:var(--grn);background:rgba(0,255,157,.1);color:var(--grn)}
+.se-choice.wrong{border-color:var(--red);background:rgba(255,51,102,.1);color:var(--red);animation:shake .4s ease}
+.se-choice:disabled{cursor:default}
+
+/* PHISH OR LEGIT SWIPE */
+.verdict-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:8px}
+
+/* ATTACK TYPE QUIZ */
+.atq-choice{padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;margin-bottom:7px;background:var(--bg3);transition:all .2s;width:100%;text-align:left;color:var(--text)}
+.atq-choice:hover{border-color:var(--acc)}.atq-choice.ok{border-color:var(--grn);background:rgba(0,255,157,.08);color:var(--grn)}.atq-choice.no{border-color:var(--red);background:rgba(255,51,102,.08);color:var(--red);animation:shake .4s}
+
+/* STREAK BADGE */
+.streak{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:12px;background:rgba(255,204,0,.12);border:1px solid rgba(255,204,0,.35);color:var(--ylw);font-size:12px;font-weight:bold}
+
+/* ---- ENCYCLOPEDIA (from index.html) ---- */
+.attacks-accordion{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.attack-item{border-bottom:1px solid var(--border)}
+.attack-item:last-child{border-bottom:none}
+.attack-header{display:flex;align-items:center;gap:1.5rem;padding:1.25rem 1.5rem;cursor:pointer;background:var(--card);transition:background .2s;user-select:none}
+.attack-header:hover{background:var(--bg3)}.attack-header.open{background:var(--bg3)}
+.attack-tag-lbl{font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:500;letter-spacing:.12em;padding:.3rem .7rem;border-radius:2px;white-space:nowrap;flex-shrink:0;width:80px;text-align:center}
+.attack-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;flex:1}
+.attack-brief{font-size:.82rem;color:var(--muted);flex:2;display:none}
+@media(min-width:640px){.attack-brief{display:block}}
+.attack-chevron{width:20px;height:20px;color:var(--muted);transition:transform .3s;flex-shrink:0}
+.attack-header.open .attack-chevron{transform:rotate(180deg)}
+.attack-body{display:none;padding:0 1.5rem 1.5rem;background:var(--bg2);border-top:1px solid var(--border)}
+.attack-body.open{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+@media(max-width:700px){.attack-body.open{grid-template-columns:1fr}}
+.attack-detail h4{font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:1.5rem 0 .6rem}
+.attack-detail p{font-size:.88rem;line-height:1.7;color:rgba(200,220,255,.8)}
+.attack-detail ul{padding-left:1.2rem}
+.attack-detail ul li{font-size:.88rem;line-height:1.8;color:rgba(200,220,255,.8)}
+.attack-visual{padding-top:1.5rem;display:flex;flex-direction:column;gap:1rem}
+.mock-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:1rem 1.2rem;font-family:'IBM Plex Mono',monospace;font-size:.75rem;line-height:1.6}
+.mock-card .mock-label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.6rem;opacity:.5}
+.mock-danger{color:var(--red)}.mock-warn{color:var(--ylw)}.mock-safe{color:var(--grn)}.mock-info{color:var(--acc)}
+.risk-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.72rem;font-family:'IBM Plex Mono',monospace;padding:.3rem .75rem;border-radius:2px;margin-top:.5rem}
+.risk-high{background:rgba(255,51,102,.12);color:var(--red);border:1px solid rgba(255,51,102,.3)}
+.risk-med{background:rgba(255,204,0,.1);color:var(--ylw);border:1px solid rgba(255,204,0,.3)}
+.stats-bar{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:40px}
+.stat-item{padding:1.5rem 2rem;text-align:center;border-right:1px solid var(--border);flex:1;min-width:140px;background:var(--card)}
+.stat-item:last-child{border-right:none}
+.stat-num{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:var(--red);display:block}
+.stat-desc{font-size:.75rem;color:var(--muted);margin-top:.25rem}
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem}
+.tip-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem;transition:border-color .2s,transform .2s}
+.tip-card:hover{border-color:var(--bh);transform:translateY(-2px)}
+.tip-icon{font-size:1.5rem;margin-bottom:.75rem}
+.tip-card h3{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;margin-bottom:.4rem}
+.tip-card p{font-size:.8rem;color:var(--muted);line-height:1.65}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--acc);text-transform:uppercase;margin-bottom:.75rem}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;line-height:1.1;margin-bottom:.75rem}
+.section-sub{color:var(--muted);max-width:540px;line-height:1.7;margin-bottom:2rem;font-size:.9rem}
+
+/* ---- API KEY BOX ---- */
+.api-key-notice{background:rgba(255,204,0,.08);border:1px solid rgba(255,204,0,.25);border-radius:8px;padding:.85rem 1rem;font-size:.8rem;color:var(--ylw);line-height:1.6;margin-bottom:1.25rem;font-family:'IBM Plex Mono',monospace}
+
+/* ---- SIM OUTPUT ---- */
+select,input:not(.inp),textarea:not(.inp){background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px 12px;border-radius:8px;width:100%;outline:none;transition:border-color .2s;margin-bottom:14px}
+select:focus,input:focus,textarea:focus{border-color:var(--acc)}
+textarea{min-height:90px;resize:vertical}
+label.form-lbl{display:block;font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase}
+#pg-output-area{min-height:200px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:.85rem;line-height:1.7;color:var(--muted);white-space:pre-wrap;font-family:'Space Mono',monospace}
+#pg-output-area.has-content{color:var(--text)}
+
+@media(max-width:600px){.lb-row{grid-template-columns:40px 1fr 64px}.lb-row div:nth-child(3){display:none}}
+
+/* ---- ATTACK BENTO GRID ---- */
+.attacks-bento{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-bottom:28px}
+.atk-card{position:relative;border-radius:16px;border:1px solid var(--border);background:var(--card);overflow:hidden;cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s;backdrop-filter:blur(16px)}
+.atk-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.atk-large{grid-column:span 4}
+.atk-med{grid-column:span 3}
+.atk-featured{grid-column:span 5}
+.atk-red:hover,.atk-red2:hover{border-color:rgba(255,51,102,.5);box-shadow:0 10px 36px rgba(255,51,102,.18)}
+.atk-ylw:hover,.atk-ylw2:hover{border-color:rgba(255,204,0,.5);box-shadow:0 10px 36px rgba(255,204,0,.12)}
+.atk-acc:hover,.atk-acc2:hover{border-color:rgba(0,200,255,.5);box-shadow:0 10px 36px rgba(0,200,255,.14)}
+.atk-grn:hover{border-color:rgba(0,255,157,.5);box-shadow:0 10px 36px rgba(0,255,157,.12)}
+.atk-featured:hover{border-color:rgba(191,127,255,.5);box-shadow:0 10px 36px rgba(191,127,255,.18)}
+.atk-bg-pattern{position:absolute;inset:0;opacity:.04;background-image:repeating-linear-gradient(45deg,currentColor 0,currentColor 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none}
+.atk-red .atk-bg-pattern,.atk-red2 .atk-bg-pattern{color:var(--red)}
+.atk-ylw .atk-bg-pattern,.atk-ylw2 .atk-bg-pattern{color:var(--ylw)}
+.atk-acc .atk-bg-pattern,.atk-acc2 .atk-bg-pattern{color:var(--acc)}
+.atk-grn .atk-bg-pattern{color:var(--grn)}
+.atk-featured .atk-bg-pattern{color:var(--pur)}
+.atk-inner{position:relative;z-index:1;padding:20px;height:100%;display:flex;flex-direction:column;gap:10px}
+.atk-featured-inner{position:relative;z-index:1;padding:24px}
+.atk-tag-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:500;letter-spacing:.14em;width:fit-content}
+.atk-icon{font-size:28px;line-height:1;margin-bottom:2px}
+.atk-name{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;line-height:1.1;color:var(--text)}
+.atk-brief{font-size:.78rem;color:var(--muted);line-height:1.65;flex:1}
+.atk-risk-bar{display:flex;align-items:center;gap:8px;margin-top:auto}
+.atk-risk-label{font-family:'IBM Plex Mono',monospace;font-size:.55rem;letter-spacing:.12em;color:var(--muted);white-space:nowrap}
+.atk-risk-track{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.atk-risk-fill{height:100%;border-radius:2px;transition:width .8s ease}
+.atk-mock{background:rgba(5,10,25,.5);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;margin-top:4px}
+.atk-mock-line{font-family:'IBM Plex Mono',monospace;font-size:.66rem;line-height:1.6;color:rgba(180,210,255,.6)}
+.atk-mock-line.mock-red{color:var(--red)}
+.atk-explore-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:7px 14px;cursor:pointer;color:rgba(200,220,255,.7);font-size:.7rem;font-family:'Space Mono',monospace;transition:all .2s;margin-top:auto;width:fit-content}
+.atk-explore-btn:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.atk-cta-strip{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 28px;background:var(--card);border:1px solid var(--border);border-radius:14px;flex-wrap:wrap;backdrop-filter:blur(16px)}
+@media(max-width:1080px){.atk-large{grid-column:span 6}.atk-med{grid-column:span 6}.atk-featured{grid-column:span 12}}
+@media(max-width:700px){.atk-large,.atk-med,.atk-featured{grid-column:span 12}}
+
+/* ---- BACK BUTTON ---- */
+.back-btn{display:inline-flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 16px;cursor:pointer;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;transition:all .2s;margin-bottom:18px}
+.back-btn:hover{border-color:var(--acc);color:var(--acc);background:rgba(0,200,255,.06)}
+</style>
+</head>
+<body>
+
+<div id="notif"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo" onclick="go('home')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span class="nav-logo-txt">PHISHSHIELD</span>
+    <span class="nav-logo-sub">// THE FALSE BOTTOM</span>
+  </div>
+  <div class="nav-r">
+    <button class="tmbtn on" id="tm-dark" onclick="setTheme('dark')" title="Dark">🌙</button>
+    <button class="tmbtn" id="tm-light" onclick="setTheme('light')" title="Light">☀️</button>
+    <button class="tmbtn" id="tm-sys" onclick="setTheme('system')" title="System">🖥️</button>
+    <div id="nav-out"><button class="auth-btn" onclick="go('auth')">Sign In</button></div>
+    <div id="nav-in">
+      <button class="nl" onclick="go('dash')">Dashboard</button>
+      <button class="nl" onclick="go('quiz')">Quiz</button>
+      <button class="nl" onclick="go('games')">🎮 Games</button>
+      <button class="nl" onclick="go('encyclopedia')">📖 Learn</button>
+      <button class="nl" onclick="go('sim')">AI Sim</button>
+      <button class="nl" onclick="go('lb')">🏆 Ranks</button>
+      <button class="nl" onclick="go('report')">Report</button>
+      <div class="nav-user-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span id="nav-uname"></span>
+      </div>
+      <button class="nl" onclick="logout()" title="Logout">↩</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HOME ============ -->
+<!-- ============ HOME ============ -->
+<div id="page-home" class="page active">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">⚠ THREAT AWARENESS TRAINING</div>
+    <h1 class="hero-t">PHISHSHIELD</h1>
+    <p class="hero-s">// THE FALSE BOTTOM</p>
+    <p class="hero-d">The world's most advanced phishing detection training platform.<br>Learn to spot deception hiding beneath every email, call, and link.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn" style="padding:14px 36px;font-size:14px" onclick="requireAuth(()=>go('quiz'))">Start Quiz →</button>
+      <button class="btn-o" style="padding:14px 36px;font-size:14px" onclick="go('games')">🎮 Play Games</button>
+      <button class="btn-o" style="padding:14px 36px;font-size:14px" onclick="go('encyclopedia')">📖 Learn Attacks</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="wrap" style="margin-bottom:48px">
+    <div class="stats-bar">
+      <div class="stat-item"><span class="stat-num">3.4B</span><span class="stat-desc">Phishing emails sent daily</span></div>
+      <div class="stat-item"><span class="stat-num">91%</span><span class="stat-desc">Of data breaches start with phishing</span></div>
+      <div class="stat-item"><span class="stat-num">$4.9M</span><span class="stat-desc">Average breach cost in 2024</span></div>
+      <div class="stat-item"><span class="stat-num">17s</span><span class="stat-desc">To click a phishing link</span></div>
+    </div>
+  </div>
+
+  <!-- Feature Cards -->
+  <div class="wrap" style="margin-bottom:60px">
+    <h2 style="font-family:'Orbitron',monospace;font-size:20px;margin-bottom:6px">Your Training <span style="color:var(--acc)">Arsenal</span></h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:24px">Everything you need to become a human firewall.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+      <div class="card card-hov" onclick="requireAuth(()=>go('quiz'))">
+        <div style="font-size:28px;margin-bottom:10px">🎯</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:6px">Detection Challenge</h3>
+        <p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">5 real-world phishing scenarios with X-Ray email analysis. Earn your Security IQ.</p>
+        <button class="btn" style="font-size:12px;padding:8px 16px" onclick="requireAuth(()=>go('quiz'))">Start Quiz →</button>
+      </div>
+      <div class="card card-hov" onclick="go('games')">
+        <div style="font-size:28px;margin-bottom:10px">🎮</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:6px">4 Security Games</h3>
+        <p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">Phish or Legit, URL Detective, Attack Quiz, Social Engineering Survival.</p>
+        <button class="btn btn-p" style="font-size:12px;padding:8px 16px">Play Games →</button>
+      </div>
+      <div class="card card-hov" onclick="go('encyclopedia')">
+        <div style="font-size:28px;margin-bottom:10px">📖</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:6px">Attack Encyclopedia</h3>
+        <p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">Deep-dive into 8 attack vectors with real-world examples and red flags.</p>
+        <button class="btn btn-g" style="font-size:12px;padding:8px 16px">Explore →</button>
+      </div>
+      <div class="card card-hov" onclick="go('sim')">
+        <div style="font-size:28px;margin-bottom:10px">🤖</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:6px">AI Phish Simulator</h3>
+        <p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">Generate personalized phishing attacks for any role. No API key needed.</p>
+        <button class="btn btn-y" style="font-size:12px;padding:8px 16px">Try Simulator →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTACK TYPES SHOWCASE — innovative redesign -->
+  <div class="wrap" style="margin-bottom:80px" id="attack-showcase">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:36px">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.22em;color:var(--red);text-transform:uppercase;margin-bottom:.5rem">// threat intelligence</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;line-height:1.1">Know Your <span style="color:var(--red)">Threats</span></h2>
+        <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem;max-width:420px;line-height:1.7">8 distinct attack vectors that compromise millions every year. Click any to explore in depth.</p>
+      </div>
+      <button class="btn-o" style="font-size:11px;padding:9px 20px;flex-shrink:0" onclick="go('encyclopedia')">Full Encyclopedia →</button>
+    </div>
+
+    <!-- Hexagonal / Bento grid attack showcase -->
+    <div class="attacks-bento">
+
+      <!-- VISHING — Large card -->
+      <div class="atk-card atk-large atk-red" onclick="go('encyclopedia')" data-atk="0">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-inner">
+          <div class="atk-tag-pill" style="background:rgba(255,51,102,.18);color:var(--red);border:1px solid rgba(255,51,102,.4)">VOICE</div>
+          <div class="atk-icon">📞</div>
+          <h3 class="atk-name">Vishing</h3>
+          <p class="atk-brief">Fraudulent calls impersonating IRS, banks & tech support to steal credentials in real time.</p>
+          <div class="atk-risk-bar">
+            <span class="atk-risk-label">RISK LEVEL</span>
+            <div class="atk-risk-track"><div class="atk-risk-fill" style="width:95%;background:var(--red)"></div></div>
+            <span style="font-size:9px;color:var(--red);font-weight:bold">CRITICAL</span>
+          </div>
+          <div class="atk-mock">
+            <div class="atk-mock-line mock-red">🔴 CALLER ID SPOOFED</div>
+            <div class="atk-mock-line">"Your account has been frozen."</div>
+            <div class="atk-mock-line mock-red">→ Requesting your OTP…</div>
+          </div>
+          <button class="atk-explore-btn">Explore Attack →</button>
+        </div>
+      </div>
+
+      <!-- SMISHING -->
+      <div class="atk-card atk-med atk-ylw" onclick="go('encyclopedia')" data-atk="1">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-inner">
+          <div class="atk-tag-pill" style="background:rgba(255,204,0,.18);color:var(--ylw);border:1px solid rgba(255,204,0,.4)">SMS</div>
+          <div class="atk-icon">💬</div>
+          <h3 class="atk-name">Smishing</h3>
+          <p class="atk-brief">Malicious texts mimicking banks, couriers & services with lookalike URLs.</p>
+          <div class="atk-risk-bar">
+            <span class="atk-risk-label">RISK LEVEL</span>
+            <div class="atk-risk-track"><div class="atk-risk-fill" style="width:88%;background:var(--ylw)"></div></div>
+            <span style="font-size:9px;color:var(--ylw);font-weight:bold">HIGH</span>
+          </div>
+          <button class="atk-explore-btn" style="border-color:rgba(255,204,0,.4);color:var(--ylw)">Explore →</button>
+        </div>
+      </div>
+
+      <!-- PHARMING -->
+      <div class="atk-card atk-med atk-acc" onclick="go('encyclopedia')" data-atk="2">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-inner">
+          <div class="atk-tag-pill" style="background:rgba(0,200,255,.18);color:var(--acc);border:1px solid rgba(0,200,255,.4)">DNS</div>
+          <div class="atk-icon">🌐</div>
+          <h3 class="atk-name">Pharming</h3>
+          <p class="atk-brief">Silently redirects correct URLs to malicious copycat sites via DNS hijacking.</p>
+          <div class="atk-risk-bar">
+            <span class="atk-risk-label">RISK LEVEL</span>
+            <div class="atk-risk-track"><div class="atk-risk-fill" style="width:90%;background:var(--acc)"></div></div>
+            <span style="font-size:9px;color:var(--acc);font-weight:bold">HIGH</span>
+          </div>
+          <button class="atk-explore-btn" style="border-color:rgba(0,200,255,.4);color:var(--acc)">Explore →</button>
+        </div>
+      </div>
+
+      <!-- QUISHING — Medium -->
+      <div class="atk-card atk-med atk-grn" onclick="go('encyclopedia')" data-atk="3">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-inner">
+          <div class="atk-tag-pill" style="background:rgba(0,255,157,.18);color:var(--grn);border:1px solid rgba(0,255,157,.4)">QR</div>
+          <div class="atk-icon">📷</div>
+          <h3 class="atk-name">Quishing</h3>
+          <p class="atk-brief">Malicious QR codes in public places & emails that bypass link scanners.</p>
+          <div class="atk-risk-bar">
+            <span class="atk-risk-label">RISK LEVEL</span>
+            <div class="atk-risk-track"><div class="atk-risk-fill" style="width:70%;background:var(--grn)"></div></div>
+            <span style="font-size:9px;color:var(--grn);font-weight:bold">MED</span>
+          </div>
+          <button class="atk-explore-btn" style="border-color:rgba(0,255,157,.4);color:var(--grn)">Explore →</button>
+        </div>
+      </div>
+
+      <!-- CLONE PHISHING — Large card -->
+      <div class="atk-card atk-large atk-red2" onclick="go('encyclopedia')" data-atk="4">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-inner">
+          <div class="atk-tag-pill" style="background:rgba(255,51,102,.18);color:var(--red);border:1px solid rgba(255,51,102,.4)">EMAIL</div>
+          <div class="atk-icon">📧</div>
+          <h3 class="atk-name">Clone Phishing</h3>
+          <p class="atk-brief">Exact replicas of real emails you've received — same content, same sender look, but all links replaced with malicious ones.</p>
+          <div class="atk-risk-bar">
+            <span class="atk-risk-label">RISK LEVEL</span>
+            <div class="atk-risk-track"><div class="atk-risk-fill" style="width:92%;background:var(--red)"></div></div>
+            <span style="font-size:9px;color:var(--red);font-weight:bold">CRITICAL</span>
+          </div>
+          <div class="atk-mock">
+            <div class="atk-mock-line">From: docusign@docu-sign-secure.com</div>
+            <div class="atk-mock-line mock-red">⚠ SPOOFED — Real: docusign@docusign.com</div>
+            <div class="atk-mock-line mock-red">→ Link replaced with malicious URL</div>
+          </div>
+          <button class="atk-explore-btn">Explore Attack →</button>
+        </div>
+      </div>
+
+      <!-- EVIL TWIN -->
+      <div class="atk-card atk-med atk-ylw2" onclick="go('encyclopedia')" data-atk="5">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-inner">
+          <div class="atk-tag-pill" style="background:rgba(255,204,0,.18);color:var(--ylw);border:1px solid rgba(255,204,0,.4)">WI-FI</div>
+          <div class="atk-icon">📶</div>
+          <h3 class="atk-name">Evil Twin</h3>
+          <p class="atk-brief">Fake Wi-Fi hotspot intercepts all traffic via man-in-the-middle attack.</p>
+          <div class="atk-risk-bar">
+            <span class="atk-risk-label">RISK LEVEL</span>
+            <div class="atk-risk-track"><div class="atk-risk-fill" style="width:86%;background:var(--ylw)"></div></div>
+            <span style="font-size:9px;color:var(--ylw);font-weight:bold">HIGH</span>
+          </div>
+          <button class="atk-explore-btn" style="border-color:rgba(255,204,0,.4);color:var(--ylw)">Explore →</button>
+        </div>
+      </div>
+
+      <!-- ANGLER PHISHING -->
+      <div class="atk-card atk-med atk-acc2" onclick="go('encyclopedia')" data-atk="6">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-inner">
+          <div class="atk-tag-pill" style="background:rgba(0,200,255,.18);color:var(--acc);border:1px solid rgba(0,200,255,.4)">SOCIAL</div>
+          <div class="atk-icon">🎣</div>
+          <h3 class="atk-name">Angler Phishing</h3>
+          <p class="atk-brief">Fake support accounts on social media targeting users who complain.</p>
+          <div class="atk-risk-bar">
+            <span class="atk-risk-label">RISK LEVEL</span>
+            <div class="atk-risk-track"><div class="atk-risk-fill" style="width:72%;background:var(--acc)"></div></div>
+            <span style="font-size:9px;color:var(--acc);font-weight:bold">MED</span>
+          </div>
+          <button class="atk-explore-btn" style="border-color:rgba(0,200,255,.4);color:var(--acc)">Explore →</button>
+        </div>
+      </div>
+
+      <!-- DEEPFAKE — Large featured card -->
+      <div class="atk-card atk-featured" onclick="go('encyclopedia')" data-atk="7">
+        <div class="atk-bg-pattern"></div>
+        <div class="atk-featured-inner">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+            <div class="atk-tag-pill" style="background:rgba(191,127,255,.2);color:var(--pur);border:1px solid rgba(191,127,255,.45)">AI/ML</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.15em;color:var(--pur);opacity:.7">EMERGING THREAT</div>
+          </div>
+          <div style="display:flex;gap:18px;align-items:flex-start">
+            <div style="font-size:52px;line-height:1;flex-shrink:0">🧠</div>
+            <div style="flex:1">
+              <h3 style="font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;color:var(--pur);margin-bottom:8px">Deepfake Phishing</h3>
+              <p style="font-size:.82rem;color:rgba(200,220,255,.8);line-height:1.75;margin-bottom:14px">The most sophisticated & fastest-growing attack vector. AI-cloned voice or video of your CEO orders wire transfers, credential resets, and system access — in real time.</p>
+              <div class="atk-risk-bar" style="margin-bottom:14px">
+                <span class="atk-risk-label">RISK LEVEL</span>
+                <div class="atk-risk-track" style="flex:1"><div class="atk-risk-fill" style="width:98%;background:var(--pur)"></div></div>
+                <span style="font-size:9px;color:var(--pur);font-weight:bold">CRITICAL+</span>
+              </div>
+              <div class="atk-mock" style="margin-bottom:14px">
+                <div class="atk-mock-line">Caller: CEO — John Harrington</div>
+                <div class="atk-mock-line" style="color:var(--pur)">"Transfer $850K by 3pm. Confidential."</div>
+                <div class="atk-mock-line mock-red">⚠ DEEPFAKE — Micro-blinking anomaly detected</div>
+              </div>
+            </div>
+          </div>
+          <button class="atk-explore-btn" style="border-color:rgba(191,127,255,.45);color:var(--pur);width:100%;justify-content:center">Deep Dive into Deepfake Phishing →</button>
+        </div>
+      </div>
+
+    </div><!-- end .attacks-bento -->
+
+    <!-- Bottom CTA strip -->
+    <div class="atk-cta-strip">
+      <div style="flex:1">
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">Ready to test yourself?</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text)">Can you spot all 8 attack types in the wild?</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-g" style="font-size:12px;padding:10px 22px" onclick="requireAuth(()=>go('quiz'))">Take the Quiz →</button>
+        <button class="btn-o" style="font-size:12px;padding:10px 22px" onclick="go('encyclopedia')">Browse Encyclopedia</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ============ END HOME ============ -->
+
+<!-- ============ AUTH ============ -->
+<div id="page-auth" class="page">
+  <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:calc(100vh - 60px);padding:24px">
+    <div style="width:100%;max-width:420px;margin-bottom:12px">
+      <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    </div>
+    <div class="card" style="width:100%;max-width:420px">
+      <div style="text-align:center;margin-bottom:26px">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" style="margin-bottom:10px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <h2 id="auth-ttl" style="color:var(--acc);font-family:'Orbitron',monospace;font-size:17px">ACCESS TERMINAL</h2>
+        <p id="auth-sub" style="color:var(--muted);font-size:11px;margin-top:5px">Enter credentials to continue</p>
+      </div>
+      <div class="tabs">
+        <button class="tab on" id="tb-in" onclick="authMode('in')">Sign In</button>
+        <button class="tab" id="tb-up" onclick="authMode('up')">Sign Up</button>
+      </div>
+      <div style="margin-bottom:13px">
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:1px">USERNAME</label>
+        <input class="inp" id="a-user" placeholder="Enter username" onkeydown="if(event.key==='Enter')doAuth()">
+      </div>
+      <div style="margin-bottom:13px">
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:1px">PASSWORD</label>
+        <div class="pw-wrap">
+          <input class="inp" type="password" id="a-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doAuth()">
+          <button class="pw-eye" onclick="togglePw()">👁️</button>
+        </div>
+      </div>
+      <div id="a-email-wrap" style="margin-bottom:20px;display:none">
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:5px;letter-spacing:1px">EMAIL (optional)</label>
+        <input class="inp" id="a-email" placeholder="your@email.com">
+      </div>
+      <button class="btn" style="width:100%;padding:13px" id="a-btn" onclick="doAuth()">ACCESS SYSTEM →</button>
+      <div id="a-err" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center;display:none"></div>
+      <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px">
+        <span id="a-sw-txt">New agent?</span>
+        <span style="color:var(--acc);cursor:pointer;margin-left:4px" id="a-sw" onclick="authMode('up')">Create account</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="page-dash" class="page">
+  <div class="wrap" style="padding-top:28px;padding-bottom:40px">
+    <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    <h2 style="font-size:20px;margin-bottom:4px">Welcome back, <span style="color:var(--acc)" id="d-uname"></span></h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:24px">Your cybersecurity training command centre</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:26px">
+      <div class="card" style="display:flex;gap:12px;align-items:center"><div style="background:rgba(0,200,255,.12);padding:12px;border-radius:12px;font-size:20px">🧠</div><div><div style="font-size:10px;color:var(--muted)">SECURITY IQ</div><div style="font-size:22px;font-weight:bold;color:var(--acc)" id="d-iq">—</div></div></div>
+      <div class="card" style="display:flex;gap:12px;align-items:center"><div style="background:rgba(255,204,0,.12);padding:12px;border-radius:12px;font-size:20px">🏆</div><div><div style="font-size:10px;color:var(--muted)">GLOBAL RANK</div><div style="font-size:22px;font-weight:bold;color:var(--ylw)" id="d-rank">—</div></div></div>
+      <div class="card" style="display:flex;gap:12px;align-items:center"><div style="background:rgba(0,255,157,.12);padding:12px;border-radius:12px;font-size:20px">🎖️</div><div><div style="font-size:10px;color:var(--muted)">TITLE</div><div style="font-size:14px;font-weight:bold;color:var(--grn)" id="d-title">—</div></div></div>
+      <div class="card" style="display:flex;gap:12px;align-items:center"><div style="background:rgba(191,127,255,.12);padding:12px;border-radius:12px;font-size:20px">🎮</div><div><div style="font-size:10px;color:var(--muted)">GAME POINTS</div><div style="font-size:22px;font-weight:bold;color:var(--pur)" id="d-pts">0</div></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px">
+      <div class="card card-hov" onclick="requireAuth(()=>go('quiz'))" style="border-color:rgba(0,200,255,.2)"><div style="font-size:26px;margin-bottom:8px">🎯</div><h3 style="font-size:14px;margin-bottom:6px">Detection Challenge</h3><p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">5-scenario quiz. Earn your Security IQ.</p><button class="btn" style="font-size:12px;padding:8px 16px">Start Quiz →</button></div>
+      <div class="card card-hov" onclick="go('games')" style="border-color:rgba(191,127,255,.2)"><div style="font-size:26px;margin-bottom:8px">🎮</div><h3 style="font-size:14px;margin-bottom:6px">Mini Games</h3><p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">4 security games. Earn points.</p><button class="btn btn-p" style="font-size:12px;padding:8px 16px">Play Now →</button></div>
+      <div class="card card-hov" onclick="go('encyclopedia')" style="border-color:rgba(0,255,157,.2)"><div style="font-size:26px;margin-bottom:8px">📖</div><h3 style="font-size:14px;margin-bottom:6px">Attack Encyclopedia</h3><p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">Deep-dive into all 8 attack types.</p><button class="btn btn-g" style="font-size:12px;padding:8px 16px">Explore →</button></div>
+      <div class="card card-hov" onclick="go('lb')" style="border-color:rgba(255,204,0,.2)"><div style="font-size:26px;margin-bottom:8px">📊</div><h3 style="font-size:14px;margin-bottom:6px">Leaderboard</h3><p style="color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px">See your global ranking live.</p><button class="btn btn-y" style="font-size:12px;padding:8px 16px">View Ranks →</button></div>
+    </div>
+    <div class="card" id="d-mini-lb"></div>
+  </div>
+</div>
+
+<!-- ============ QUIZ ============ -->
+<div id="page-quiz" class="page">
+  <div class="wrap-sm" style="padding-top:22px;padding-bottom:40px">
+    <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    <div style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:7px">
+        <span style="font-size:11px;color:var(--muted)" id="q-lbl">Scenario 1 of 5</span>
+        <span style="font-size:11px;color:var(--acc)" id="q-slbl">Score: 0</span>
+      </div>
+      <div class="prog"><div class="prog-fill" id="q-prog" style="width:0%"></div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:13px" id="q-tags"></div>
+    <div class="card email-box" style="margin-bottom:16px">
+      <div class="email-hdr">
+        <div class="ef"><span class="el">FROM:</span>
+          <span class="xr" id="q-sndr-xr"><span class="xr-lnk" id="q-sndr"></span>
+            <div class="xr-tip"><div class="xr-ttl">⚠ X-RAY: ACTUAL SENDER</div>
+              <div class="xr-row"><span class="xr-ml">Display: </span><span id="q-sd2"></span></div>
+              <div class="xr-row"><span class="xr-ml">Actual: </span><span id="q-sa" class="xr-bad"></span></div>
+              <div id="q-sm" style="display:none" class="xr-warn">🚨 DOMAIN MISMATCH DETECTED</div>
+            </div>
+          </span>
+        </div>
+        <div class="ef"><span class="el">SUBJECT:</span><span style="font-weight:bold;font-size:13px" id="q-subj"></span></div>
+      </div>
+      <div class="ebody" id="q-body"></div>
+    </div>
+    <div class="rf-panel" id="q-rf" style="display:none">
+      <h4 style="color:var(--red);font-size:12px;margin-bottom:9px">⚠️ RED FLAGS DETECTED</h4>
+      <div id="q-rfl"></div>
+    </div>
+    <div id="q-fb" style="display:none;margin-bottom:14px"></div>
+    <div id="q-dec">
+      <p style="color:var(--muted);font-size:11px;text-align:center;margin-bottom:12px">💡 Hover over sender & links to use X-Ray, then decide:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+        <button class="btn btn-r" style="padding:17px;font-size:13px" onclick="answerQ(true)">⚠️ PHISHING</button>
+        <button class="btn btn-g" style="padding:17px;font-size:13px" onclick="answerQ(false)">✅ LEGITIMATE</button>
+      </div>
+    </div>
+    <div id="q-nxt" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ============ QUIZ RESULTS ============ -->
+<div id="page-res" class="page">
+  <div class="wrap-xs" style="padding-top:30px;padding-bottom:40px">
+    <div class="card" style="text-align:center">
+      <div style="font-size:52px;margin-bottom:7px" id="r-emoji">🛡️</div>
+      <h2 style="color:var(--acc);font-family:'Orbitron',monospace;margin-bottom:7px">Training Complete</h2>
+      <div style="font-size:64px;font-weight:bold;margin-bottom:4px" id="r-score"></div>
+      <div style="color:var(--muted);font-size:11px;margin-bottom:7px">SECURITY IQ SCORE</div>
+      <div id="r-tbadge" style="display:inline-block;padding:4px 14px;border-radius:18px;font-weight:bold;margin-bottom:18px;font-size:13px"></div>
+      <p style="color:var(--muted);font-size:12px;line-height:1.7;margin-bottom:20px" id="r-msg"></p>
+      <div id="r-brkdwn" style="text-align:left;margin-bottom:22px"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" onclick="startQuiz()">Retry Quiz</button>
+        <button class="btn-o" onclick="go('lb')">Leaderboard</button>
+        <button class="btn-o" onclick="go('dash')">Dashboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAMES PAGE ============ -->
+<div id="page-games" class="page">
+  <div class="wrap" style="padding-top:26px;padding-bottom:50px">
+    <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    <h2 style="font-family:'Orbitron',monospace;font-size:20px;margin-bottom:5px">🎮 Security <span style="color:var(--pur)">Games</span></h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:24px">Sharpen your cyber instincts — each game earns points on the leaderboard.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">
+      <div class="card game-card card-hov" onclick="openGame('pol')">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="font-size:28px">🃏</div>
+          <div><h3 style="font-size:14px">Phish or Legit?</h3><div style="font-size:10px;color:var(--muted)">Swipe-style rapid decision game</div></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">10 emails flash by — judge each as phishing or legitimate. Race against the clock!</p>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;color:var(--pur)">⚡ Up to 200 pts</span>
+          <button class="btn btn-p" style="font-size:11px;padding:7px 14px" onclick="event.stopPropagation();openGame('pol')">Play →</button>
+        </div>
+      </div>
+      <div class="card game-card card-hov" onclick="openGame('url')">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="font-size:28px">🔗</div>
+          <div><h3 style="font-size:14px">URL Detective</h3><div style="font-size:10px;color:var(--muted)">Spot the fake URL challenge</div></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">Pick the malicious URL from a pair of look-alikes. 8 rounds with speed bonus!</p>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;color:var(--acc)">⚡ Up to 160 pts</span>
+          <button class="btn" style="font-size:11px;padding:7px 14px" onclick="event.stopPropagation();openGame('url')">Play →</button>
+        </div>
+      </div>
+      <div class="card game-card card-hov" onclick="openGame('atq')">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="font-size:28px">🧩</div>
+          <div><h3 style="font-size:14px">Attack Type Quiz</h3><div style="font-size:10px;color:var(--muted)">Identify the attack category</div></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">Read a scenario and name the attack — vishing, smishing, pharming, and more!</p>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;color:var(--grn)">⚡ Up to 150 pts</span>
+          <button class="btn btn-g" style="font-size:11px;padding:7px 14px" onclick="event.stopPropagation();openGame('atq')">Play →</button>
+        </div>
+      </div>
+      <div class="card game-card card-hov" onclick="openGame('se')">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="font-size:28px">🕵️</div>
+          <div><h3 style="font-size:14px">Social Eng. Survival</h3><div style="font-size:10px;color:var(--muted)">Story-based decision scenarios</div></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">Navigate real social engineering scenarios. One wrong move and you're compromised!</p>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;color:var(--ylw)">⚡ Up to 180 pts</span>
+          <button class="btn btn-y" style="font-size:11px;padding:7px 14px" onclick="event.stopPropagation();openGame('se')">Play →</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:22px" id="game-scores-card">
+      <h3 style="font-size:14px;margin-bottom:14px">🏅 Your Best Scores</h3>
+      <div id="game-scores-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAME MODALS ============ -->
+<div class="modal-bg" id="modal-pol">
+  <div class="modal" style="max-width:580px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="color:var(--pur)">🃏 Phish or Legit?</h3>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="streak" id="pol-streak">🔥 0</span>
+        <span style="font-size:13px;color:var(--acc)" id="pol-score">0 pts</span>
+        <button onclick="closeGame('pol')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px">
+      <span id="pol-round">Round 1/10</span>
+      <span id="pol-timer-lbl" style="color:var(--ylw)">⏱ 8s</span>
+    </div>
+    <div class="prog" style="margin-bottom:16px"><div class="prog-fill" id="pol-prog" style="width:100%"></div></div>
+    <div class="card" id="pol-card" style="margin-bottom:16px;min-height:140px;font-size:12px;line-height:1.75"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button class="btn btn-r" style="padding:16px;font-size:14px" onclick="polAnswer(true)">🎣 PHISHING</button>
+      <button class="btn btn-g" style="padding:16px;font-size:14px" onclick="polAnswer(false)">✅ LEGIT</button>
+    </div>
+    <div id="pol-fb" style="margin-top:12px;display:none"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-url">
+  <div class="modal" style="max-width:560px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="color:var(--acc)">🔗 URL Detective</h3>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:13px;color:var(--acc)" id="url-score">0 pts</span>
+        <button onclick="closeGame('url')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px">
+      <span id="url-round">Round 1/8</span>
+      <span id="url-timer-lbl" style="color:var(--ylw)">⏱ 12s</span>
+    </div>
+    <div class="prog" style="margin-bottom:14px"><div class="prog-fill" id="url-prog" style="width:100%"></div></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px" id="url-context"></p>
+    <p style="font-size:12px;font-weight:bold;margin-bottom:12px">Which URL is <span style="color:var(--red)">FAKE / MALICIOUS</span>?</p>
+    <div id="url-opts" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div id="url-fb" style="margin-top:12px;display:none"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-atq">
+  <div class="modal" style="max-width:540px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="color:var(--grn)">🧩 Attack Type Quiz</h3>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:13px;color:var(--grn)" id="atq-score">0 pts</span>
+        <button onclick="closeGame('atq')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px" id="atq-round">Question 1/8</div>
+    <div class="prog" style="margin-bottom:14px"><div class="prog-fill" id="atq-prog" style="width:0%"></div></div>
+    <div class="card" style="margin-bottom:14px;font-size:12px;line-height:1.8" id="atq-scenario"></div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">What type of attack is this?</p>
+    <div id="atq-choices"></div>
+    <div id="atq-fb" style="margin-top:10px;display:none"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-se">
+  <div class="modal" style="max-width:560px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="color:var(--ylw)">🕵️ Social Eng. Survival</h3>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:12px" id="se-lives">❤️❤️❤️</div>
+        <span style="font-size:13px;color:var(--ylw)" id="se-score">0 pts</span>
+        <button onclick="closeGame('se')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px" id="se-round">Scenario 1/6</div>
+    <div class="card" style="margin-bottom:14px;font-size:12px;line-height:1.8;border-left:3px solid var(--ylw)" id="se-scenario"></div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">What do you do?</p>
+    <div id="se-choices"></div>
+    <div id="se-fb" style="margin-top:10px;display:none"></div>
+  </div>
+</div>
+
+<!-- ============ ENCYCLOPEDIA ============ -->
+<div id="page-encyclopedia" class="page">
+  <div class="wrap" style="padding-top:28px;padding-bottom:60px">
+    <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    <div class="section-label">// attack vectors</div>
+    <h2 class="section-title">Attack <span style="color:var(--red)">Encyclopedia</span></h2>
+    <p class="section-sub">Eight distinct phishing attack vectors — each with detailed breakdowns, real-world examples, red flags, and visual simulations.</p>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar" style="margin-bottom:36px">
+      <div class="stat-item"><span class="stat-num">3.4B</span><span class="stat-desc">Phishing emails sent daily</span></div>
+      <div class="stat-item"><span class="stat-num">91%</span><span class="stat-desc">Of breaches start with phishing</span></div>
+      <div class="stat-item"><span class="stat-num">$4.9M</span><span class="stat-desc">Average breach cost 2024</span></div>
+      <div class="stat-item"><span class="stat-num">17s</span><span class="stat-desc">Time to click a phishing link</span></div>
+    </div>
+
+    <div class="attacks-accordion" id="encyclopediaGrid"></div>
+
+    <!-- Protection Tips -->
+    <div style="margin-top:60px">
+      <div class="section-label">// defense playbook</div>
+      <h2 class="section-title">How to Stay <span style="color:var(--grn)">Protected</span></h2>
+      <p class="section-sub">Practical countermeasures every person and organization should implement today.</p>
+      <div class="tips-grid">
+        <div class="tip-card">
+          <div class="tip-icon">🔐</div>
+          <h3>Enable MFA Everywhere</h3>
+          <p>Multi-factor authentication stops 99.9% of automated attacks even if your password is stolen.</p>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">🔗</div>
+          <h3>Hover Before You Click</h3>
+          <p>Always hover over links to preview the real destination URL before clicking anything in an email.</p>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">📞</div>
+          <h3>Verify Out-of-Band</h3>
+          <p>If a call or message requests urgent action, hang up and call back using a number you look up independently.</p>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">🌐</div>
+          <h3>Check HTTPS & Domains</h3>
+          <p>Look for padlock icons and verify exact domain spelling. Attackers use subtle typos like paypai.com.</p>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">📱</div>
+          <h3>Don't Trust Unknown QR Codes</h3>
+          <p>Preview QR destinations before opening. Be especially skeptical of QR codes in public places.</p>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">🤖</div>
+          <h3>Establish Voice Codes</h3>
+          <p>Create a safe word with executives and finance teams to verify identity during unusual requests — especially for wire transfers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AI SIMULATOR ============ -->
+<div id="page-sim" class="page">
+  <div class="wrap-sm" style="padding-top:26px;padding-bottom:40px">
+    <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    <h2 style="font-family:'Orbitron',monospace;font-size:20px;margin-bottom:5px">AI Phish <span style="color:var(--grn)">Simulator</span></h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:22px">Generate personalized phishing attacks for any role using AI. X-Ray mode enabled on all links.</p>
+    
+    <!-- Tab switch between simulators -->
+    <div class="tabs" style="margin-bottom:22px">
+      <button class="tab on" id="sim-tab-role" onclick="switchSimTab('role')">Role-Based (AI)</button>
+      <button class="tab" id="sim-tab-custom" onclick="switchSimTab('custom')">Custom Scenario (API Key)</button>
+    </div>
+
+    <!-- ROLE-BASED SIM (no API key, uses built-in) -->
+    <div id="sim-pane-role">
+      <div class="card" style="margin-bottom:20px">
+        <h3 style="font-size:13px;margin-bottom:13px">Select Target Role</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px" id="role-btns">
+          <button class="rbtn on" onclick="selRole(this,'Finance Professional')">Finance Professional</button>
+          <button class="rbtn" onclick="selRole(this,'Software Engineer')">Software Engineer</button>
+          <button class="rbtn" onclick="selRole(this,'HR Manager')">HR Manager</button>
+          <button class="rbtn" onclick="selRole(this,'C-Suite Executive')">C-Suite Executive</button>
+          <button class="rbtn" onclick="selRole(this,'Healthcare Worker')">Healthcare Worker</button>
+          <button class="rbtn" onclick="selRole(this,'University Student')">University Student</button>
+          <button class="rbtn" onclick="selRole(this,'IT Administrator')">IT Administrator</button>
+          <button class="rbtn" onclick="selRole(this,'Legal / Compliance')">Legal / Compliance</button>
+        </div>
+        <button class="btn" id="sim-btn" onclick="runSim()">🤖 Generate AI Phishing Scenario</button>
+      </div>
+      <div id="sim-out"></div>
+    </div>
+
+    <!-- CUSTOM SIM (requires API key) -->
+    <div id="sim-pane-custom" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div class="card">
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--red);margin-top:2px"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--ylw);margin-top:2px"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--grn);margin-top:2px"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.1em">CONFIG.SH</span>
+          </div>
+          <div class="api-key-notice">⚠ API KEY REQUIRED — Your key stays in your browser only.</div>
+          <label class="form-lbl">Anthropic API Key</label>
+          <input type="password" id="pgApiKey" placeholder="sk-ant-api03-…" class="inp" style="margin-bottom:14px">
+          <label class="form-lbl">Attack Type</label>
+          <select id="pgAttackType" class="inp" style="margin-bottom:14px">
+            <option value="vishing">Vishing (Voice Call)</option>
+            <option value="smishing">Smishing (SMS)</option>
+            <option value="pharming">Pharming</option>
+            <option value="quishing">Quishing (QR Code)</option>
+            <option value="clone phishing">Clone Phishing</option>
+            <option value="evil twin">Evil Twin Wi-Fi</option>
+            <option value="angler phishing">Angler Phishing</option>
+            <option value="deepfake phishing">Deepfake Phishing (AI)</option>
+          </select>
+          <label class="form-lbl">Target Scenario</label>
+          <select id="pgTarget" class="inp" style="margin-bottom:14px">
+            <option value="a bank customer">Bank customer</option>
+            <option value="an employee at a tech company">Tech company employee</option>
+            <option value="a hospital staff member">Hospital staff</option>
+            <option value="a university student">University student</option>
+            <option value="a small business owner">Small business owner</option>
+          </select>
+          <label class="form-lbl">Additional Context (optional)</label>
+          <textarea id="pgContext" class="inp" style="min-height:80px;margin-bottom:14px" placeholder="e.g. Focus on urgency tactics, pretend to be PayPal..."></textarea>
+          <button class="btn btn-r" id="pgGenerateBtn" onclick="pgGenerateScenario()" style="width:100%;padding:.85rem">Generate Scenario</button>
+        </div>
+        <div class="card">
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--red);margin-top:2px"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--ylw);margin-top:2px"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--grn);margin-top:2px"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:.1em">OUTPUT.TXT</span>
+          </div>
+          <label class="form-lbl">Generated Scenario</label>
+          <div id="pg-output-area">Select an attack type and click Generate to produce a realistic phishing scenario for awareness training.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LEADERBOARD ============ -->
+<div id="page-lb" class="page">
+  <div class="wrap-sm" style="padding-top:26px;padding-bottom:40px">
+    <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:26px">
+      <span style="font-size:30px">🏆</span>
+      <div>
+        <h2 style="font-size:20px;margin-bottom:2px">Global <span style="color:var(--ylw)">Leaderboard</span></h2>
+        <p style="color:var(--muted);font-size:11px">Rankings from quiz & game performance — updates live</p>
+      </div>
+    </div>
+    <div id="lb-me-banner" style="margin-bottom:16px"></div>
+    <div class="card">
+      <div class="lb-row lb-hdr" style="margin-bottom:4px">
+        <div style="font-size:9px;color:var(--muted);font-weight:bold">RANK</div>
+        <div style="font-size:9px;color:var(--muted);font-weight:bold">AGENT</div>
+        <div style="font-size:9px;color:var(--muted);font-weight:bold;text-align:center">TITLE</div>
+        <div style="font-size:9px;color:var(--muted);font-weight:bold;text-align:center">IQ</div>
+      </div>
+      <div id="lb-rows"></div>
+    </div>
+    <p style="color:var(--muted);font-size:11px;text-align:center;margin-top:12px">Complete the Quiz to earn your global rank. Game points add bonus XP.</p>
+    <div style="text-align:center;margin-top:12px" id="lb-cta"></div>
+  </div>
+</div>
+
+<!-- ============ REPORT ============ -->
+<div id="page-report" class="page">
+  <div class="wrap-sm" style="padding-top:26px;padding-bottom:40px">
+    <button class="back-btn" onclick="go('home')">← Back to Home</button>
+    <h2 style="font-family:'Orbitron',monospace;font-size:20px;margin-bottom:5px">🚩 Report-a-Phish <span style="color:var(--grn)">Hub</span></h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:22px">Paste a suspicious email for instant AI threat analysis.</p>
+    <div class="card" style="margin-bottom:20px">
+      <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:6px;letter-spacing:1px">PASTE EMAIL CONTENT</label>
+      <textarea class="inp" id="rep-txt" style="min-height:170px;resize:vertical;line-height:1.65" placeholder="Paste the full email here — sender, subject, body..."></textarea>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn" id="rep-btn" onclick="doReport()">🔍 Analyze with AI</button>
+        <button class="btn-o" onclick="document.getElementById('rep-txt').value='';document.getElementById('rep-out').innerHTML=''">Clear</button>
+      </div>
+    </div>
+    <div id="rep-out"></div>
+    <div id="rep-hist" style="margin-top:20px"></div>
+  </div>
+</div>
+
+<footer style="border-top:1px solid var(--border);padding:24px 18px;text-align:center;color:var(--muted);font-size:10px;margin-top:40px">
+  <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--acc);margin-bottom:6px">🛡️ PHISHSHIELD // THE FALSE BOTTOM</div>
+  <p>AI-Powered Cybersecurity Education · Phishing · Vishing · Smishing · Pharming · Quishing · Clone · Evil Twin · Deepfake</p>
+  <p style="margin-top:6px;color:rgba(96,120,152,.5)">Built for Security Awareness Training. Not for malicious use.</p>
+  <div style="margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:10px;color:rgba(96,120,152,.45);letter-spacing:.08em;text-transform:uppercase">Crafted with ❤️ by</span>
+    <span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;background:linear-gradient(90deg,var(--acc),var(--pur));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.12em">TEAM CLICK-BAIT-ER</span>
+    <span style="font-size:10px;color:rgba(96,120,152,.35)">·</span>
+    <span style="font-size:10px;color:rgba(96,120,152,.4);font-family:'IBM Plex Mono',monospace">Don't take the bait 🎣</span>
+  </div>
+</footer>
+
+<script>
+// ========================================
+// DATABASE — localStorage-based
+// ========================================
+const DB = {
+  USERS_KEY: 'ps_users_v3',
+  SESSION_KEY: 'ps_session_v3',
+  LB_KEY: 'ps_lb_v3',
+  GAME_KEY: 'ps_games_v3',
+
+  getUsers() { try { return JSON.parse(localStorage.getItem(this.USERS_KEY)||'{}') } catch(e){return {}} },
+  saveUsers(u) { localStorage.setItem(this.USERS_KEY, JSON.stringify(u)) },
+
+  getUser(username) { return this.getUsers()[username.toLowerCase()] || null },
+
+  createUser(username, password, email='') {
+    const users = this.getUsers();
+    const key = username.toLowerCase();
+    if (users[key]) return { ok:false, msg:'Username already taken' };
+    users[key] = {
+      username, email,
+      passwordHash: this.hash(password),
+      joinedAt: new Date().toISOString(),
+      quizCount:0, quizBest:0, gamePoints:0,
+      lastSeen: new Date().toISOString()
+    };
+    this.saveUsers(users);
+    return { ok:true };
+  },
+
+  checkLogin(username, password) {
+    const u = this.getUser(username);
+    if (!u) return { ok:false, msg:'Username not found' };
+    if (u.passwordHash !== this.hash(password)) return { ok:false, msg:'Incorrect password' };
+    return { ok:true, user:u };
+  },
+
+  updateUser(username, updates) {
+    const users = this.getUsers();
+    const key = username.toLowerCase();
+    if (users[key]) { Object.assign(users[key], updates); this.saveUsers(users); }
+  },
+
+  hash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) { h = ((h<<5)-h) + str.charCodeAt(i); h|=0; }
+    return h.toString(36);
+  },
+
+  setSession(username) { localStorage.setItem(this.SESSION_KEY, username) },
+  getSession() { return localStorage.getItem(this.SESSION_KEY) },
+  clearSession() { localStorage.removeItem(this.SESSION_KEY) },
+
+  getLB() { try { return JSON.parse(localStorage.getItem(this.LB_KEY)||'[]') } catch(e){return []} },
+  saveLB(lb) { localStorage.setItem(this.LB_KEY, JSON.stringify(lb)) },
+
+  upsertLB(username, quizScore, quizCorrect, quizTotal, gamePoints) {
+    let lb = this.getLB();
+    const ti = secTitle(quizScore);
+    const existing = lb.find(e=>e.username===username);
+    const combined = quizScore + Math.floor(gamePoints/10);
+    if (existing) {
+      existing.gamePoints = gamePoints;
+      existing.combinedIQ = combined;
+      if (quizScore > existing.quizBest) {
+        existing.quizBest = quizScore;
+        existing.quizCorrect = quizCorrect;
+        existing.quizTotal = quizTotal;
+        existing.title = ti.title;
+        existing.titleColor = ti.color;
+      }
+      existing.lastDate = new Date().toISOString().split('T')[0];
+      existing.quizCount = (existing.quizCount||0) + 1;
+    } else {
+      lb.push({ username, quizBest:quizScore, quizCorrect, quizTotal,
+        gamePoints, combinedIQ:combined, title:ti.title, titleColor:ti.color,
+        lastDate: new Date().toISOString().split('T')[0], quizCount:1 });
+    }
+    lb.sort((a,b)=>b.quizBest-a.quizBest||b.gamePoints-a.gamePoints);
+    this.saveLB(lb);
+  },
+
+  updateGamePoints(username, points) {
+    const users = this.getUsers();
+    const key = username.toLowerCase();
+    if (users[key]) {
+      users[key].gamePoints = (users[key].gamePoints||0) + points;
+      this.saveUsers(users);
+      const lb = this.getLB();
+      const entry = lb.find(e=>e.username===username);
+      if (entry) {
+        entry.gamePoints = users[key].gamePoints;
+        entry.combinedIQ = entry.quizBest + Math.floor(entry.gamePoints/10);
+        this.saveLB(lb);
+      }
+    }
+  },
+
+  getGameScores(username) {
+    try { const all=JSON.parse(localStorage.getItem(this.GAME_KEY)||'{}'); return all[username]||{} } catch(e){return {}}
+  },
+
+  saveGameScore(username, game, score) {
+    const all = JSON.parse(localStorage.getItem(this.GAME_KEY)||'{}');
+    if (!all[username]) all[username]={};
+    if (!all[username][game] || score > all[username][game]) all[username][game]=score;
+    localStorage.setItem(this.GAME_KEY, JSON.stringify(all));
+  }
+};
+
+// Seed leaderboard
+(function seedLB(){
+  const lb = DB.getLB();
+  if (!lb.length) {
+    DB.saveLB([
+      {username:'CyberGuardian_01',quizBest:100,quizCorrect:5,quizTotal:5,gamePoints:380,combinedIQ:138,title:'Cyber Guardian',titleColor:'#00ff9d',lastDate:'2026-02-18',quizCount:3},
+      {username:'SecurityPro',quizBest:80,quizCorrect:4,quizTotal:5,gamePoints:290,combinedIQ:109,title:'Security Analyst',titleColor:'#00c8ff',lastDate:'2026-02-19',quizCount:2},
+      {username:'PhishHunter',quizBest:80,quizCorrect:4,quizTotal:5,gamePoints:210,combinedIQ:101,title:'Security Analyst',titleColor:'#00c8ff',lastDate:'2026-02-17',quizCount:1},
+      {username:'NetDefender',quizBest:60,quizCorrect:3,quizTotal:5,gamePoints:160,combinedIQ:76,title:'Vigilant User',titleColor:'#ffcc00',lastDate:'2026-02-16',quizCount:2},
+      {username:'DigitalSentinel',quizBest:60,quizCorrect:3,quizTotal:5,gamePoints:80,combinedIQ:68,title:'Vigilant User',titleColor:'#ffcc00',lastDate:'2026-02-15',quizCount:1},
+    ]);
+  }
+})();
+
+// ========================================
+// APP STATE
+// ========================================
+let CU = null;
+let quizIdx=0, quizAnswers=[], quizScore=0;
+let simRole='Finance Professional';
+let repHist=[];
+let _authMode='in';
+
+function secTitle(score){
+  if(score>=90)return{title:'Cyber Guardian',color:'#00ff9d',emoji:'🛡️'};
+  if(score>=75)return{title:'Security Analyst',color:'#00c8ff',emoji:'🔍'};
+  if(score>=60)return{title:'Vigilant User',color:'#ffcc00',emoji:'👁️'};
+  if(score>=40)return{title:'At-Risk User',color:'#ff9933',emoji:'⚠️'};
+  return{title:'Phishing Target',color:'#ff3366',emoji:'🎣'};
+}
+
+// ========================================
+// THEME
+// ========================================
+function setTheme(m){
+  localStorage.setItem('ps_tm',m);
+  document.querySelectorAll('.tmbtn').forEach(b=>b.classList.remove('on'));
+  const el=document.getElementById('tm-'+m); if(el) el.classList.add('on');
+  let r=m;
+  if(m==='system') r=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  document.documentElement.setAttribute('data-theme',r==='light'?'light':'');
+}
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{if(localStorage.getItem('ps_tm')==='system')setTheme('system')});
+
+// ========================================
+// NOTIFICATION
+// ========================================
+function notif(msg,t='ok'){
+  const el=document.getElementById('notif');
+  el.textContent=(t==='ok'?'✓ ':'✗ ')+msg;
+  el.className='show '+t;
+  clearTimeout(window._nt);
+  window._nt=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ========================================
+// NAVIGATION
+// ========================================
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  const el=document.getElementById('page-'+p);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nl').forEach(b=>{
+    b.classList.toggle('on',b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+p+"'"));
+  });
+  window.scrollTo(0,0);
+  if(p==='dash')refreshDash();
+  if(p==='lb')renderLB();
+  if(p==='games')renderGameScores();
+  if(p==='encyclopedia')renderEncyclopedia();
+}
+
+function requireAuth(cb){
+  if(CU) cb();
+  else { notif('Please sign in first','err'); go('auth'); }
+}
+
+// ========================================
+// AUTH
+// ========================================
+function authMode(m){
+  _authMode=m;
+  document.getElementById('tb-in').classList.toggle('on',m==='in');
+  document.getElementById('tb-up').classList.toggle('on',m==='up');
+  document.getElementById('auth-ttl').textContent=m==='in'?'ACCESS TERMINAL':'ENLIST NOW';
+  document.getElementById('auth-sub').textContent=m==='in'?'Enter credentials to continue':'Join the cyber defense network';
+  document.getElementById('a-btn').textContent=m==='in'?'ACCESS SYSTEM →':'JOIN NETWORK →';
+  document.getElementById('a-sw-txt').textContent=m==='in'?'New agent?':'Already enlisted?';
+  document.getElementById('a-sw').textContent=m==='in'?'Create account':'Sign in here';
+  document.getElementById('a-sw').onclick=()=>authMode(m==='in'?'up':'in');
+  document.getElementById('a-email-wrap').style.display=m==='up'?'block':'none';
+  document.getElementById('a-err').style.display='none';
+}
+
+function togglePw(){
+  const i=document.getElementById('a-pass');
+  i.type=i.type==='password'?'text':'password';
+}
+
+function doAuth(){
+  const u=document.getElementById('a-user').value.trim();
+  const p=document.getElementById('a-pass').value;
+  const errEl=document.getElementById('a-err');
+  errEl.style.display='none';
+  if(!u||!p){errEl.textContent='Please fill all fields';errEl.style.display='block';return;}
+  if(_authMode==='up'){
+    if(u.length<3){errEl.textContent='Username must be 3+ characters';errEl.style.display='block';return;}
+    if(p.length<4){errEl.textContent='Password must be 4+ characters';errEl.style.display='block';return;}
+    const r=DB.createUser(u,p,document.getElementById('a-email').value.trim());
+    if(!r.ok){errEl.textContent=r.msg;errEl.style.display='block';return;}
+    notif('Account created! Welcome, '+u+' 🛡️');
+  } else {
+    const r=DB.checkLogin(u,p);
+    if(!r.ok){errEl.textContent=r.msg;errEl.style.display='block';return;}
+  }
+  DB.setSession(u);
+  CU=DB.getUser(u);
+  DB.updateUser(u,{lastSeen:new Date().toISOString()});
+  document.getElementById('a-user').value='';
+  document.getElementById('a-pass').value='';
+  document.getElementById('a-email').value='';
+  document.getElementById('a-err').style.display='none';
+  document.getElementById('nav-out').style.display='none';
+  document.getElementById('nav-in').style.display='flex';
+  document.getElementById('nav-uname').textContent=u;
+  notif('Welcome'+ (_authMode==='up'?' aboard':'  back') +', '+u+'! 🛡️');
+  go('dash');
+}
+
+function logout(){
+  DB.clearSession();
+  CU=null;
+  document.getElementById('nav-out').style.display='block';
+  document.getElementById('nav-in').style.display='none';
+  go('home');
+}
+
+function restoreSession(){
+  const s=DB.getSession();
+  if(s){
+    const u=DB.getUser(s);
+    if(u){
+      CU=u;
+      document.getElementById('nav-out').style.display='none';
+      document.getElementById('nav-in').style.display='flex';
+      document.getElementById('nav-uname').textContent=u.username;
+    }
+  }
+}
+
+// ========================================
+// QUIZ SCENARIOS
+// ========================================
+const SCENARIOS=[
+  {id:1,diff:'easy',cat:'Banking',subj:'URGENT: Your Account Has Been Suspended',
+   sender:{d:'Security@Chase.com',a:'security@ch4se-alerts.ru'},
+   body:`Dear Valued Customer,
+
+We have detected suspicious activity on your Chase Bank account. Your account has been temporarily SUSPENDED for your protection.
+
+To restore access immediately, verify your identity within 24 HOURS or your account will be permanently closed.
+
+Click here to verify: http://chase-secure-verify.net/login
+
+You will need:
+• Social Security Number
+• Full debit card number + CVV
+• Online banking password
+
+Failure to act NOW will result in permanent closure.
+
+Chase Bank Security Team`,
+   links:[{d:'http://chase-secure-verify.net/login',a:'http://ch4se-steal.ru/phish?id=7821'}],
+   rf:[{t:'Urgent 24-hour deadline — panic tactic',k:'URGENCY'},{t:'Domain: ch4se-alerts.ru (not chase.com)',k:'DOMAIN'},{t:'Requests SSN + CVV + Password simultaneously',k:'SENSITIVE'},{t:'Threat of permanent closure',k:'THREAT'}],
+   fish:true,explain:"Real banks NEVER ask for your SSN, CVV, and password together. 'ch4se-alerts.ru' is a Russian domain impersonating Chase. The 24-hour deadline prevents rational thinking."},
+  {id:2,diff:'medium',cat:'IT Support',subj:'Action Required: Microsoft 365 Storage Limit Reached',
+   sender:{d:'IT Support <support@microsoft.com>',a:'no-reply@microsofts-support.xyz'},
+   body:`Hello,
+
+Your Microsoft 365 mailbox has reached 98% capacity. Email service will be interrupted without action.
+
+To expand storage for free, sign in with your corporate credentials:
+
+→ Expand Storage Now
+
+This offer expires TODAY. Once full, you cannot send or receive emails.
+
+Microsoft 365 Team`,
+   links:[{d:'→ Expand Storage Now',a:'http://microsofts-support.xyz/o365/harvest.php'}],
+   rf:[{t:"Domain: microsofts-support.xyz (extra 's', fake .xyz)",k:'DOMAIN'},{t:'Same-day expiration pressure',k:'URGENCY'},{t:"Requests 'corporate credentials' via external link",k:'SENSITIVE'}],
+   fish:true,explain:"Microsoft only uses @microsoft.com. 'microsofts-support.xyz' is fake. The extra 's' and .xyz TLD are dead giveaways. Real storage upgrades happen inside the M365 admin panel."},
+  {id:3,diff:'hard',cat:'HR / Internal',subj:'Q3 Salary Adjustment — Confidential',
+   sender:{d:'HR Department <hr@yourcompany.com>',a:'hr@yourcompany-portal.co'},
+   body:`Hi Team,
+
+As part of Q3 performance review, we are processing salary adjustments for eligible employees.
+
+To receive your adjusted payment in the next payroll cycle, log in to verify your bank details:
+
+HR Employee Portal Login
+
+This is STRICTLY CONFIDENTIAL. Do not discuss with colleagues.
+
+Sarah Mitchell — Head of Human Resources`,
+   links:[{d:'HR Employee Portal Login',a:'http://yourcompany-portal.co/hr-login?track=sal_adj'}],
+   rf:[{t:"Asks to 'verify bank details' via email link",k:'SENSITIVE'},{t:'Domain: yourcompany-portal.co (not yourcompany.com)',k:'DOMAIN'},{t:'Secrecy instruction isolates victim from IT verification',k:'MANIPULATION'}],
+   fish:true,explain:"Sophisticated spear-phishing. The 'secrecy' instruction stops you verifying with IT. 'yourcompany-portal.co' mimics an internal system. HR never asks for bank details via email."},
+  {id:4,diff:'medium',cat:'Package Delivery',subj:'Your Amazon order #112-4729182 has shipped',
+   sender:{d:'Amazon <shipment-tracking@amazon.com>',a:'shipment-tracking@amazon.com'},
+   body:`Hello,
+
+Your order has shipped and is on its way!
+
+Order #112-4729182
+Estimated delivery: Tuesday, February 25
+
+Track your package: https://www.amazon.com/progress-tracker/package/ref=pe_link
+
+Items: USB-C Hub (1x)
+
+Thank you for shopping with Amazon.`,
+   links:[{d:'https://www.amazon.com/progress-tracker/package/ref=pe_link',a:'https://www.amazon.com/progress-tracker/package/ref=pe_link'}],
+   rf:[],fish:false,explain:"LEGITIMATE. The sender is @amazon.com, the link goes to amazon.com, there's no urgency or threat, no credential requests, and it has specific order details. This is how real Amazon shipping emails look."},
+  {id:5,diff:'hard',cat:'Crypto',subj:'Your Coinbase wallet requires 2FA re-verification',
+   sender:{d:'Coinbase Security <security@coinbase.com>',a:'security@coinbase-auth.support'},
+   body:`Dear Coinbase Member,
+
+Your two-factor authentication method is outdated. Under our updated security protocols, all users must re-verify by February 28, 2026.
+
+Failure to verify will RESTRICT your ability to withdraw funds.
+
+Begin 2FA Verification (takes ~2 minutes)
+
+If you did not receive this on your registered device, your account may ALREADY BE COMPROMISED.
+
+— Coinbase Trust & Safety`,
+   links:[{d:'Begin 2FA Verification (takes ~2 minutes)',a:'http://coinbase-auth.support/2fa?steal=wallet_seed'}],
+   rf:[{t:'Domain: coinbase-auth.support (not coinbase.com)',k:'DOMAIN'},{t:'Withdrawal restriction threat',k:'THREAT'},{t:"Double-fear: 'already compromised' panic trigger",k:'MANIPULATION'},{t:'Hard deadline: Feb 28',k:'URGENCY'}],
+   fish:true,explain:"Coinbase only uses @coinbase.com. 'coinbase-auth.support' is a complete fake. The double-fear tactic triggers panic. Real 2FA updates happen in-app, never via email links."}
+];
+
+// ========================================
+// QUIZ ENGINE
+// ========================================
+function startQuiz(){
+  quizIdx=0;quizAnswers=[];quizScore=0;
+  go('quiz');renderQ();
+}
+
+function renderQ(){
+  const sc=SCENARIOS[quizIdx];
+  document.getElementById('q-lbl').textContent=`Scenario ${quizIdx+1} of ${SCENARIOS.length}`;
+  document.getElementById('q-slbl').textContent=`Score: ${quizScore} correct`;
+  document.getElementById('q-prog').style.width=(quizIdx/SCENARIOS.length*100)+'%';
+  const dc={'easy':'e','medium':'m','hard':'h'}[sc.diff];
+  document.getElementById('q-tags').innerHTML=`<span class="tag tag-${dc}">${sc.diff.toUpperCase()}</span><span class="tag tag-a">${sc.cat}</span>`;
+  document.getElementById('q-sndr').textContent=sc.sender.d;
+  document.getElementById('q-sd2').textContent=sc.sender.d;
+  document.getElementById('q-sa').textContent=sc.sender.a;
+  document.getElementById('q-sa').className=sc.sender.d!==sc.sender.a?'xr-bad':'xr-good';
+  const mis=sc.sender.d!==sc.sender.a;
+  document.getElementById('q-sm').style.display=mis?'block':'none';
+  document.getElementById('q-subj').textContent=sc.subj;
+  renderBody('q-body',sc);
+  document.getElementById('q-rf').style.display='none';
+  document.getElementById('q-fb').style.display='none';
+  document.getElementById('q-dec').style.display='block';
+  document.getElementById('q-nxt').style.display='none';
+}
+
+function renderBody(id,sc){
+  const el=document.getElementById(id);
+  let html='';
+  for(const line of sc.body.split('\n')){
+    const lnk=sc.links.find(l=>line.includes(l.d));
+    if(lnk){
+      const p=line.split(lnk.d);
+      const safe=lnk.d===lnk.a;
+      html+=esc(p[0])+`<span class="xr"><span class="xr-lnk">${esc(lnk.d)}</span>
+        <div class="xr-tip"><div class="xr-ttl">🔍 X-RAY: REAL DESTINATION</div>
+        <div class="xr-row"><span class="xr-ml">Shown: </span><span style="color:var(--ylw)">${esc(lnk.d)}</span></div>
+        <div class="xr-row"><span class="xr-ml">Actual: </span><span class="${safe?'xr-good':'xr-bad'}">${esc(lnk.a)}</span></div>
+        ${!safe?'<div class="xr-warn">🚨 LINK DESTINATION MISMATCH</div>':'<div class="xr-safe">✅ Link appears legitimate</div>'}
+        </div></span>`+esc(p[1]||'');
+    } else html+=esc(line);
+    html+='\n';
+  }
+  el.innerHTML=html;
+}
+
+function answerQ(isPhish){
+  const sc=SCENARIOS[quizIdx];
+  const ok=isPhish===sc.fish;
+  quizAnswers.push({id:sc.id,isPhish,ok});
+  if(ok)quizScore++;
+  if(sc.rf.length){
+    document.getElementById('q-rf').style.display='block';
+    document.getElementById('q-rfl').innerHTML=sc.rf.map(f=>`
+      <div class="rf-item"><div class="rf-dot"></div>
+      <div><span style="font-size:12px;color:var(--text)">${esc(f.t)}</span>
+      <span class="rf-type" style="margin-left:7px">${f.k}</span></div></div>`).join('');
+  }
+  const fbEl=document.getElementById('q-fb');
+  fbEl.style.display='block';
+  fbEl.className=ok?'fb-ok':'fb-err';
+  fbEl.innerHTML=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+    <span style="font-size:17px">${ok?'✅':'❌'}</span>
+    <span style="font-weight:bold;color:${ok?'var(--grn)':'var(--red)'}">${ok?'CORRECT — Good eye!':'INCORRECT — You fell for it.'}</span></div>
+    <p style="color:var(--text);font-size:12px;line-height:1.75;margin-bottom:8px"><strong style="color:var(--acc)">Analysis: </strong>${esc(sc.explain)}</p>
+    <p style="color:var(--muted);font-size:11px">💡 Always hover over links & sender to use X-Ray mode before clicking.</p>`;
+  document.getElementById('q-dec').style.display='none';
+  document.getElementById('q-nxt').style.display='block';
+  document.getElementById('q-nxt').innerHTML=`<button class="btn" style="padding:11px 24px" onclick="nextQ()">${quizIdx+1>=SCENARIOS.length?'View Results →':'Next Scenario →'}</button>`;
+}
+
+function nextQ(){
+  if(++quizIdx>=SCENARIOS.length) showResults();
+  else renderQ();
+}
+
+function showResults(){
+  const correct=quizScore,total=SCENARIOS.length;
+  const score=Math.round(correct/total*100);
+  const ti=secTitle(score);
+  if(CU){
+    DB.upsertLB(CU.username,score,correct,total,CU.gamePoints||0);
+    DB.updateUser(CU.username,{quizCount:(CU.quizCount||0)+1,quizBest:Math.max(CU.quizBest||0,score)});
+    CU=DB.getUser(CU.username);
+    notif(`Score saved! Security IQ: ${score} 🛡️`);
+  }
+  go('res');
+  document.getElementById('r-emoji').textContent=ti.emoji;
+  document.getElementById('r-score').textContent=score;
+  document.getElementById('r-score').style.color=ti.color;
+  const tb=document.getElementById('r-tbadge');
+  tb.textContent=ti.title; tb.style.color=ti.color;
+  tb.style.background=ti.color+'22'; tb.style.border=`1px solid ${ti.color}55`;
+  const msgs=['Keep practicing to improve!','Getting better — keep training!','Good awareness!','Excellent detection skills!','Elite cyber defender! 🎖️'];
+  document.getElementById('r-msg').textContent=`You correctly identified ${correct} out of ${total} scenarios. ${msgs[Math.min(Math.floor(score/25),4)]}`;
+  document.getElementById('r-brkdwn').innerHTML=quizAnswers.map((a,i)=>{
+    const sc=SCENARIOS[i];
+    return `<div style="display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;margin-bottom:6px;${a.ok?'background:rgba(0,255,157,.06);border:1px solid rgba(0,255,157,.22)':'background:rgba(255,51,102,.06);border:1px solid rgba(255,51,102,.22)'}">
+      <span>${a.ok?'✅':'❌'}</span>
+      <span style="flex:1;font-size:12px">${esc(sc.subj)}</span>
+      <span style="font-size:10px;color:${a.ok?'var(--grn)':'var(--red)'}">${a.ok?'CORRECT':'MISSED'}</span>
+    </div>`;
+  }).join('');
+}
+
+// ========================================
+// DASHBOARD
+// ========================================
+function refreshDash(){
+  if(!CU)return;
+  document.getElementById('d-uname').textContent=CU.username;
+  const lb=DB.getLB();
+  const entry=lb.find(e=>e.username===CU.username);
+  const rank=entry?lb.indexOf(entry)+1:null;
+  const ti=entry?secTitle(entry.quizBest):null;
+  document.getElementById('d-iq').textContent=entry?entry.quizBest:'—';
+  document.getElementById('d-iq').style.color=ti?ti.color:'var(--acc)';
+  document.getElementById('d-rank').textContent=rank?'#'+rank:'Unranked';
+  document.getElementById('d-title').textContent=entry?entry.title:'—';
+  document.getElementById('d-pts').textContent=CU.gamePoints||0;
+  document.getElementById('d-mini-lb').innerHTML=`<h3 style="font-size:13px;margin-bottom:14px">📈 Top Defenders</h3>`+
+    lb.slice(0,5).map((e,i)=>{
+      const t=secTitle(e.quizBest);
+      const isMe=CU&&e.username===CU.username;
+      return `<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid rgba(0,200,255,.05)">
+        <span style="font-size:13px;min-width:26px">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</span>
+        <span style="flex:1;font-size:12px;color:${isMe?'var(--acc)':'var(--text)'}${isMe?';font-weight:bold':''}">${esc(e.username)}</span>
+        <span style="font-size:10px;color:${t.color}">${e.title}</span>
+        <span style="font-size:16px;font-weight:bold;color:${t.color}">${e.quizBest}</span>
+      </div>`;
+    }).join('')+
+    `<button class="btn-o" style="width:100%;margin-top:10px;font-size:11px" onclick="go('lb')">Full Leaderboard →</button>`;
+}
+
+// ========================================
+// LEADERBOARD
+// ========================================
+function renderLB(){
+  const lb=DB.getLB();
+  const myBanner=document.getElementById('lb-me-banner');
+  const cta=document.getElementById('lb-cta');
+  if(CU){
+    const myIdx=lb.findIndex(e=>e.username===CU.username);
+    if(myIdx>=0){
+      const me=lb[myIdx];const ti=secTitle(me.quizBest);
+      myBanner.innerHTML=`<div class="card" style="background:rgba(0,200,255,.07);border-color:rgba(0,200,255,.4);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="font-size:24px;font-weight:bold;color:var(--acc);min-width:44px">#${myIdx+1}</div>
+        <div style="flex:1"><div style="color:var(--text);font-weight:bold;font-size:14px">${esc(me.username)} <span style="font-size:10px;color:var(--acc)">(You)</span></div>
+        <div style="color:var(--muted);font-size:10px">${me.quizCount||1} quiz attempt${(me.quizCount||1)>1?'s':''} · ${me.gamePoints||0} game pts</div></div>
+        <div style="text-align:center"><div style="font-size:26px;font-weight:bold;color:${ti.color}">${me.quizBest}</div><div style="font-size:10px;color:${ti.color}">${me.title}</div></div>
+      </div>`;
+    } else {
+      myBanner.innerHTML=`<div class="card" style="background:rgba(255,204,0,.07);border-color:rgba(255,204,0,.3);text-align:center;padding:13px"><div style="color:var(--ylw);font-size:13px">⚡ Take the Detection Challenge to earn your global rank!</div></div>`;
+    }
+    cta.innerHTML='';
+  } else {
+    myBanner.innerHTML='';
+    cta.innerHTML=`<button class="btn" onclick="go('auth')">Sign In to Compete →</button>`;
+  }
+  document.getElementById('lb-rows').innerHTML=lb.slice(0,30).map((e,i)=>{
+    const ti=secTitle(e.quizBest);
+    const rankIcon=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    const rankColor=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--muted)';
+    const isMe=CU&&e.username===CU.username;
+    return `<div class="lb-row${isMe?' lb-me':''}">
+      <div style="font-size:15px;font-weight:bold;color:${rankColor}">${rankIcon}</div>
+      <div><div style="font-size:13px;color:${isMe?'var(--acc)':'var(--text)'}${isMe?';font-weight:bold':''}">${esc(e.username)}${isMe?' <span style="font-size:9px;color:var(--acc)">(You)</span>':''}</div>
+      <div style="font-size:10px;color:var(--muted)">${e.quizCorrect||'?'}/${e.quizTotal||5} correct · ${e.gamePoints||0} game pts</div></div>
+      <div style="display:flex;justify-content:center"><span style="font-size:9px;padding:3px 7px;border-radius:9px;border:1px solid ${ti.color};color:${ti.color};background:${ti.color}18">${ti.emoji} ${e.title}</span></div>
+      <div style="font-size:18px;font-weight:bold;text-align:center;color:${ti.color}">${e.quizBest}</div>
+    </div>`;
+  }).join('');
+}
+
+// ========================================
+// ENCYCLOPEDIA (from index.html)
+// ========================================
+const ATTACKS = [
+  {tag:'VOICE',name:'Vishing',color:'var(--red)',brief:'Fraudulent phone calls impersonating trusted organizations',risk:'HIGH',
+   description:`Vishing (voice phishing) involves attackers making phone calls while impersonating legitimate entities like the IRS, your bank, Microsoft tech support, or even a colleague. Callers use social engineering to create panic and pressure targets into sharing credentials, card numbers, or sending money.`,
+   howItWorks:['Attacker spoofs caller ID to show a real bank or government number','Creates urgency: "Your account has been compromised — act now"','Asks for verification codes, PIN, or remote access to your device','May use "smishing" texts first to warm the target up'],
+   example:`"This is Sarah from Chase Bank Fraud Prevention. We've detected suspicious activity on your account ending in 4821. To prevent your account from being frozen, I need to verify your identity with a one-time code being sent to your phone right now."`,
+   redFlags:['Caller creates extreme urgency','Requests OTP codes verbally','Asks you to install remote desktop software','Refuses to let you call back on official number'],
+   mockTitle:'📞 Incoming Call',
+   mockLines:['🔴 CALLER ID SPOOFED','From: Chase Bank (800-935-9935)','"Your account has been frozen."','"Verify NOW or lose access."','→ [Requesting your OTP code...]'],
+   mockClass:'mock-danger'},
+  {tag:'SMS',name:'Smishing',color:'var(--ylw)',brief:'Malicious text messages mimicking banks, couriers, or services',risk:'HIGH',
+   description:`Smishing (SMS phishing) uses text messages to lure victims. These often impersonate delivery services (FedEx, UPS), banks, or government agencies. The messages contain shortened or lookalike URLs leading to credential-harvesting pages.`,
+   howItWorks:['Victim receives an SMS about a missed package or suspicious transaction','Message contains a shortened URL (bit.ly) or lookalike domain','Landing page looks identical to the real site and steals login credentials','Sometimes installs malware via fake app download prompts'],
+   example:`"USPS: Your package #9400111899223862 could not be delivered. Update your delivery address within 24hrs: usps-delivery-resch.com/update"`,
+   redFlags:['Unexpected package alerts you never ordered','Shortened or misspelled URLs','Requests credit card for "small redelivery fee"','Urgent 24-hour deadline pressure'],
+   mockTitle:'💬 SMS Message',
+   mockLines:['From: +1 (202) 555-0183','"FedEx: Your shipment is on hold."','"Click to reschedule: bit.ly/fdx-3k2m"','⚠ SUSPICIOUS LINK DETECTED','Real domain: fedex-reschedule-auth.ru'],
+   mockClass:'mock-warn'},
+  {tag:'DNS',name:'Pharming',color:'var(--acc)',brief:'Silently redirects correct URLs to malicious copycat sites',risk:'HIGH',
+   description:`Pharming is particularly dangerous because victims type the correct URL into their browser but are silently redirected to a fake site. Attackers either compromise the DNS server that resolves domain names, or install malware on the victim's device that modifies the local hosts file.`,
+   howItWorks:["Attacker compromises a DNS server or the victim's router","Victim types 'bankofamerica.com' — DNS resolves it to attacker's IP instead","Fake site looks pixel-perfect and has a valid (attacker-obtained) SSL certificate","Credentials entered are silently captured; victim may be logged in via proxy"],
+   example:`A user types "chase.com" into their browser. Their compromised router sends the request to the attacker's server. The fake site loads with a valid green padlock. The user logs in — and the attacker now has their credentials.`,
+   redFlags:['Site asks to re-login despite being remembered','Slight visual differences on familiar sites','SSL certificate is self-signed or from unknown issuer','Router admin page accessible without a password'],
+   mockTitle:'🌐 Browser Bar',
+   mockLines:['URL: https://www.chase.com ✓','🔒 Certificate: Valid','','⚠ ACTUAL IP: 185.220.101.47 (RU)','→ DNS hijacked at router level'],
+   mockClass:'mock-info'},
+  {tag:'QR',name:'Quishing',color:'var(--grn)',brief:'Malicious QR codes in public places, emails, or documents',risk:'MED',
+   description:`Quishing (QR code phishing) exploits the human tendency to trust printed QR codes, especially in physical environments. Attackers paste malicious QR stickers over legitimate ones in restaurants, parking meters, and public spaces — or embed them in phishing emails where security tools can't scan the destination.`,
+   howItWorks:['Attacker places QR sticker over a legitimate one (e.g., parking payment)','Or sends a QR code in an email or PDF bypassing link scanners','Victim scans and is taken to a credential phishing site or malware download','Mobile devices are often less protected than corporate desktops'],
+   example:`A "scan to pay" QR sticker on a parking meter redirects to a fake city payment site that collects credit card details. Victims only notice when their actual parking ticket arrives.`,
+   redFlags:['QR sticker appears placed over original content','Destination URL looks strange in preview','Requests more info than seems necessary (CVV, full card)','Unexpected QR codes in emails from known contacts'],
+   mockTitle:'📷 QR Scan Result',
+   mockLines:['Scanned QR Code','Preview URL:','→ city-parking-pay.xyz/auth','','⚠ Expected: cityofaustin.gov/parking','⚠ MISMATCH DETECTED'],
+   mockClass:'mock-warn'},
+  {tag:'EMAIL',name:'Clone Phishing',color:'var(--red)',brief:'Exact replicas of real emails you received, with swapped links',risk:'HIGH',
+   description:`Clone phishing creates a near-perfect duplicate of a legitimate email you actually received — same sender appearance, same content, same attachments — but with all links replaced by malicious ones. Because you received the original, your guard is down and you trust the "resend."`,
+   howItWorks:['Attacker intercepts or monitors email traffic to find a real sent message','Creates identical copy with spoofed "From" address','Replaces all links and attachments with malicious versions','Sends with excuse: "We noticed our last email had a broken link — here\'s the corrected version"'],
+   example:`You receive what appears to be a follow-up from DocuSign: "We noticed your link expired — please re-sign using the updated document." The email looks identical to the one you got last week. The link leads to a DocuSign credential-harvesting page.`,
+   redFlags:['Unexpected "resend" or "corrected version" of a previous email','Slight variations in sender email address','Links go to lookalike domains','Attachments require enabling macros'],
+   mockTitle:'📧 Email Header',
+   mockLines:['From: docusign@docu-sign-secure.com','Subject: Re: Updated Document Ready','','⚠ SPOOFED: Real sender was','   docusign@docusign.com','→ Link replaced with malicious URL'],
+   mockClass:'mock-danger'},
+  {tag:'WI-FI',name:'Evil Twin',color:'var(--ylw)',brief:'Fake Wi-Fi hotspot that intercepts all your network traffic',risk:'HIGH',
+   description:`An Evil Twin attack sets up a rogue Wi-Fi access point with the same SSID (network name) as a legitimate hotspot. When victims connect, all their traffic flows through the attacker's device, enabling man-in-the-middle attacks, credential theft, and malware injection.`,
+   howItWorks:['Attacker sets up hotspot with same name as airport/café network','Broadcasts stronger signal so devices auto-connect','All HTTP traffic is readable; HTTPS can be downgraded with sslstrip','May show a fake captive portal to harvest email/password'],
+   example:`At an airport, your laptop auto-connects to "Airport_Free_WiFi" — a network the attacker created. When you check your banking app, the attacker's device intercepts the session token even though HTTPS is shown.`,
+   redFlags:['Two networks with identical names visible','Prompted to log in on a network you usually auto-join','Certificate warnings on normally-trusted sites','Unusually slow connection or unexpected disconnects'],
+   mockTitle:'📶 Available Networks',
+   mockLines:['✓ Starbucks_WiFi  ████  Saved','⚠ Starbucks_WiFi  █████ [EVIL TWIN]','','Auto-connected to STRONGER signal','→ All traffic routed via attacker'],
+   mockClass:'mock-warn'},
+  {tag:'SOCIAL',name:'Angler Phishing',color:'var(--acc)',brief:'Fake support accounts on social media targeting complainers',risk:'MED',
+   description:`Angler phishing exploits social media complaint culture. Attackers monitor Twitter/X, Facebook, and Instagram for users complaining about banks, airlines, or telecoms — then reply from fake official support handles, offering to "help" and directing them to phishing sites.`,
+   howItWorks:['Bot monitors hashtags and @mentions of major brands','Fake support account replies within minutes of a complaint','Redirects victim to a fake "support portal" to verify identity','Harvests account credentials, credit card info, or installs malware'],
+   example:`You tweet "@Delta my bag has been lost!" Within 2 minutes, @Delta_HelpDesk_US replies: "We're so sorry! DM us your booking reference." The handle is fake — your booking details are now compromised.`,
+   redFlags:['Support account replies unusually fast (bot behavior)','Handle has underscores, numbers, or slight variations','Asks you to click an external link or DM personal info','Account created recently with few followers/posts'],
+   mockTitle:'🐦 Social Reply',
+   mockLines:['@Delta_Support_US · just now','"Hi! We can help right away."','"Please DM your booking ref"','"and last 4 digits of your card"','⚠ HANDLE: Created 3 days ago'],
+   mockClass:'mock-info'},
+  {tag:'AI/ML',name:'Deepfake Phishing',color:'var(--pur)',brief:'AI-cloned voice or video of executives ordering fraudulent actions',risk:'HIGH',
+   description:`The most sophisticated and rapidly-growing attack vector. Using AI voice cloning and video deepfakes, attackers impersonate CEOs, CFOs, or trusted colleagues to authorize wire transfers, credential handovers, or access to secure systems. A 3-second audio clip is enough to clone a voice convincingly.`,
+   howItWorks:['Attacker harvests voice/video samples from LinkedIn, YouTube, earnings calls','Generates convincing audio or video using AI tools','Calls or video conferences an employee impersonating the CEO','Orders urgent wire transfer or credential reset — creating false authority'],
+   example:`A finance director received a WhatsApp video call from what appeared to be their CEO and CFO, requesting an urgent £25 million transfer for a confidential acquisition. Both were AI deepfakes. The transfer was made before anyone realized.`,
+   redFlags:['Unusual request for secrecy ("don\'t tell HR")','Video call with subtle artifacts, unnatural blinking, or lip-sync issues','Extreme urgency around financial transfers','Verify with a prearranged "safe word" code'],
+   mockTitle:'📹 Video Call',
+   mockLines:['Caller: CEO — John Harrington','"Transfer $850K by 3pm today."','"This is highly confidential."','','⚠ DEEPFAKE INDICATORS:','  Micro-blinking anomaly detected'],
+   mockClass:'mock-danger'}
+];
+
+let encyclopediaRendered = false;
+
+function renderEncyclopedia(){
+  if(encyclopediaRendered) return;
+  encyclopediaRendered = true;
+  const grid = document.getElementById('encyclopediaGrid');
+  grid.innerHTML = ATTACKS.map((a,i) => `
+    <div class="attack-item" data-index="${i}">
+      <div class="attack-header" onclick="toggleAttack(${i})" id="enc-hdr-${i}">
+        <span class="attack-tag-lbl" style="background:${a.color}18;color:${a.color};border:1px solid ${a.color}44">${a.tag}</span>
+        <span class="attack-name">${a.name}</span>
+        <span class="attack-brief">${a.brief}</span>
+        <span class="risk-badge ${a.risk==='HIGH'?'risk-high':'risk-med'}" style="margin:0">
+          ${a.risk==='HIGH'?'🔴':'🟡'} ${a.risk} RISK
+        </span>
+        <svg class="attack-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="attack-body" id="enc-body-${i}">
+        <div class="attack-detail">
+          <h4>What is it?</h4>
+          <p>${a.description}</p>
+          <h4>How it works</h4>
+          <ul>${a.howItWorks.map(s=>`<li>${s}</li>`).join('')}</ul>
+          <h4>Real-world Example</h4>
+          <p style="font-style:italic;border-left:2px solid ${a.color};padding-left:.75rem;color:rgba(200,220,255,.75)">${a.example}</p>
+          <h4>Red Flags</h4>
+          <ul>${a.redFlags.map(r=>`<li>⚑ ${r}</li>`).join('')}</ul>
+        </div>
+        <div class="attack-visual">
+          <div class="mock-card">
+            <div class="mock-label">${a.mockTitle}</div>
+            ${a.mockLines.map(l=>`<div class="${l.startsWith('⚠')||l.startsWith('🔴')?'mock-danger':l.startsWith('✓')||l.startsWith('🔒')?'mock-safe':l.startsWith('→')?a.mockClass:''}">${l||'&nbsp;'}</div>`).join('')}
+          </div>
+          <div class="risk-badge ${a.risk==='HIGH'?'risk-high':'risk-med'}">
+            ${a.risk==='HIGH'?'🔴':'🟡'} ${a.risk} RISK — ${a.name}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleAttack(i){
+  const hdr=document.getElementById(`enc-hdr-${i}`);
+  const body=document.getElementById(`enc-body-${i}`);
+  const isOpen=body.classList.contains('open');
+  document.querySelectorAll('[id^="enc-hdr-"]').forEach(h=>h.classList.remove('open'));
+  document.querySelectorAll('[id^="enc-body-"]').forEach(b=>b.classList.remove('open'));
+  if(!isOpen){
+    hdr.classList.add('open');
+    body.classList.add('open');
+    setTimeout(()=>body.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  }
+}
+
+// ========================================
+// GAMES DATA
+// ========================================
+const POL_EMAILS=[
+  {preview:`FROM: noreply@paypa1.com\nSUBJECT: Your account is limited\n\nPlease verify your identity immediately or your PayPal account will be restricted.`,fish:true,why:"'paypa1.com' uses number '1' instead of letter 'l' — classic typosquatting."},
+  {preview:`FROM: no-reply@github.com\nSUBJECT: New sign-in to your account\n\nA new device signed in to your GitHub account from San Francisco, CA. If this was you, no action is needed.`,fish:false,why:"Legitimate GitHub security alert from github.com. No urgency, no credential request, informational only."},
+  {preview:`FROM: hr@company-portal.net\nSUBJECT: Direct deposit update required\n\nPlease update your bank account details by clicking the link below before Friday or your salary will be delayed.`,fish:true,why:"HR never asks for bank details via email. 'company-portal.net' is a generic, suspicious domain. Salary deadline is pressure tactic."},
+  {preview:`FROM: security@apple.com\nSUBJECT: Your Apple ID was used to sign in\n\nYour Apple ID was used to sign in to iCloud on a Windows PC. Review if this was you in Account Security settings.`,fish:false,why:"Legitimate Apple sign-in notification. Sender is apple.com, no urgency, directs to account settings not an external link."},
+  {preview:`FROM: service@amaz0n.com\nSUBJECT: Order suspended — action required\n\nYour recent order has been suspended. Verify your payment within 24 hours or the order will be cancelled and your account suspended.`,fish:true,why:"'amaz0n.com' replaces 'o' with '0'. Dual threat (order + account suspension) creates panic. Amazon uses amazon.com only."},
+  {preview:`FROM: linkedin@e.linkedin.com\nSUBJECT: You appeared in 12 searches this week\n\nPeople are looking at your profile! See who viewed it by logging into LinkedIn.`,fish:false,why:"Legitimate LinkedIn email from their official subdomain e.linkedin.com. Standard engagement notification, no credential harvesting."},
+  {preview:`FROM: it-helpdesk@yourcompany-support.co\nSUBJECT: Mandatory VPN certificate update\n\nAll employees must reinstall the VPN certificate by EOD. Download and run the installer attached to this email.`,fish:true,why:"Fake IT domain 'yourcompany-support.co'. IT never sends executable attachments via email. This installs malware."},
+  {preview:`FROM: noreply@netflix.com\nSUBJECT: Your payment was declined\n\nWe had trouble renewing your membership. Please update your payment information to avoid service interruption.`,fish:false,why:"This could be legitimate Netflix, but always navigate to netflix.com directly — never click payment links in emails. Domain is correct here."},
+  {preview:`FROM: admin@microsoft-365-support.com\nSUBJECT: Your Teams license expires in 24 hours\n\nRenew now to avoid losing access to Microsoft Teams, SharePoint, and Outlook.`,fish:true,why:"'microsoft-365-support.com' is NOT a Microsoft domain. Microsoft uses microsoft.com. License emails never come from third-party domains."},
+  {preview:`FROM: no-reply@dropbox.com\nSUBJECT: Alex shared a folder with you\n\nAlex Smith shared 'Q4 Reports' with you on Dropbox. Click to view.`,fish:false,why:"Legitimate Dropbox sharing notification from dropbox.com. Standard collaboration workflow with no urgency or credential harvesting."},
+];
+
+const URL_ROUNDS=[
+  {ctx:"Your bank sends you a link to reset your password:",opts:["https://www.wellsfargo.com/auth/reset","https://www.wellsfar90.com/auth/reset"],bad:1,why:"'wellsfar90.com' replaces letters with numbers — typosquatting."},
+  {ctx:"You get an email from IT about a Microsoft update:",opts:["https://login.microsoftonline.com/reset","https://login.microsoft0nline.com/reset"],bad:1,why:"'microsoft0nline' replaces 'o' with '0' — pixel-perfect lookalike."},
+  {ctx:"A shipping notification contains a tracking link:",opts:["https://www.fedex.com/tracking?id=123","https://fedex-tracking-us.com/track/123"],bad:1,why:"FedEx only uses fedex.com. 'fedex-tracking-us.com' is a phishing domain."},
+  {ctx:"PayPal asks you to verify your account:",opts:["https://www.paypal.com/verify","https://www.paypal-secure-verify.net/verify"],bad:1,why:"PayPal only uses paypal.com. Any hyphenated variant is fake."},
+  {ctx:"Your Google account shows a security alert:",opts:["https://accounts.google.com/security","https://accounts-google-security.com/login"],bad:1,why:"Real Google uses accounts.google.com. Hyphens and .com variants are fakes."},
+  {ctx:"Amazon sends a customer service link:",opts:["https://www.amazon.com/help/contact","https://amazon-customer-service-help.com/contact"],bad:1,why:"Amazon only uses amazon.com. Long hyphenated domains are spoofs."},
+  {ctx:"Apple asks you to verify your Apple ID:",opts:["https://appleid.apple.com/account/manage","https://appleid-apple.com/account"],bad:1,why:"Apple uses appleid.apple.com (subdomain). 'appleid-apple.com' is a fake."},
+  {ctx:"Your bank's fraud team sends a verification link:",opts:["https://fraud-alert.citibank.com/verify","https://citibank-fraud-alert.com/verify"],bad:1,why:"'fraud-alert.citibank.com' is a legitimate Citibank subdomain. 'citibank-fraud-alert.com' is fake."},
+];
+
+const ATQ_ROUNDS=[
+  {scenario:"You receive a phone call from someone claiming to be from the IRS. They say you owe back taxes and will be arrested unless you pay with gift cards immediately.",answer:"Vishing",choices:["Vishing","Smishing","Pharming","Quishing"],why:"Voice phishing (vishing) — scammer calls impersonating a government agency."},
+  {scenario:"You get a text message: 'Your USPS package could not be delivered. Click here to reschedule: http://usps-delivery-reschedule.com'",answer:"Smishing",choices:["Vishing","Smishing","Evil Twin","Clone Phishing"],why:"SMS phishing (smishing) — fake package delivery text with malicious link."},
+  {scenario:"You type 'mybank.com' into your browser correctly, but end up on a fake bank site that looks identical to the real one.",answer:"Pharming",choices:["Vishing","Pharming","Angler Phishing","Deepfake Phishing"],why:"Pharming — DNS hijacking redirects you to a fake site even with the correct URL."},
+  {scenario:"You scan a QR code on a restaurant menu, but instead of the menu, you're taken to a page asking for your credit card to 'verify age'.",answer:"Quishing",choices:["Smishing","Quishing","Clone Phishing","Evil Twin"],why:"QR code phishing (quishing) — malicious QR code leads to phishing site."},
+  {scenario:"You connect to 'Starbucks_Free_Wifi' at a coffee shop. An attacker on that network intercepts your banking session.",answer:"Evil Twin",choices:["Pharming","Evil Twin","Vishing","Angler Phishing"],why:"Evil Twin attack — fake Wi-Fi hotspot set up by attacker to intercept traffic."},
+  {scenario:"You tweet a complaint at your airline. A fake support account @Airline_Help replies asking you to click a link to resolve your issue.",answer:"Angler Phishing",choices:["Smishing","Angler Phishing","Clone Phishing","Quishing"],why:"Angler phishing — fake social media support accounts intercept complaints."},
+  {scenario:"You receive an email that looks exactly like one from LinkedIn last week, but the 'Accept Connection' button now leads to a malware download.",answer:"Clone Phishing",choices:["Spear Phishing","Clone Phishing","Vishing","Pharming"],why:"Clone phishing — a legitimate email is copied with malicious links substituted."},
+  {scenario:"Your CFO receives a video call from what appears to be the CEO requesting an urgent $50,000 wire transfer, verified by voice and video.",answer:"Deepfake Phishing",choices:["Vishing","Spear Phishing","Deepfake Phishing","Evil Twin"],why:"Deepfake phishing — AI-generated voice/video impersonates executive for fraud."},
+];
+
+const SE_SCENARIOS=[
+  {scenario:`It's 4:45pm Friday. A call comes in: "Hi, this is Mike from IT. We detected malware on your workstation and need your Windows password to remotely clean it right now before COB."`,choices:["Give the password — IT needs it urgently","Ask for Mike's employee ID and call IT's official number back","Say you'll be there in 5 minutes so he can use your keyboard directly","Hang up immediately without saying anything"],correct:1,why:"IT will never ask for your password. Always verify by calling the official IT number. Option 1 is credential theft; option 2 is the correct response."},
+  {scenario:`An email from 'ceo@yourcompany.net' lands in your inbox: "I'm in an urgent meeting and can't call. Please buy 5x $200 Amazon gift cards for client gifts and send me the codes ASAP. I'll reimburse you."`,choices:["Buy the gift cards — it's the CEO's request","Email back asking for more details","Call the CEO directly on their known number to verify","Forward to IT security and do nothing else"],correct:3,why:"Gift card scams are common CEO fraud. The .net domain (not .com) is suspicious. Forward to IT security immediately — this is a scam."},
+  {scenario:`A visitor arrives at reception: "Hi, I'm the new fire safety inspector. I need to quickly check the server room for sprinkler compliance — it'll take 5 minutes."`,choices:["Escort them to the server room","Ask for their ID and check against the appointment schedule","Call the fire marshal's office to verify","Turn them away completely — no appointment, no access"],correct:1,why:"Physical social engineering (tailgating/pretexting). Always verify credentials against a pre-approved appointment list. Unverified visitors never get facility access."},
+  {scenario:`You find a USB drive in the parking lot labeled 'Payroll_2026.xlsx'. No one is around.`,choices:["Plug it in to find the owner","Give it to reception","Hand it to IT security without plugging it in","Throw it away"],correct:2,why:"'Baiting' attack — USB drives planted to auto-install malware. NEVER plug in found drives. Hand directly to IT security who can safely analyze it."},
+  {scenario:`A colleague texts you: "Hey! Locked out of my laptop during client demo — can you add my email to the shared project folder? username: jsmith@co.com"`,choices:["Add them — it's your colleague and an emergency","Call the number you have saved for this colleague to verify","Reply asking for their employee ID","Tell them to contact IT directly"],correct:1,why:"Could be account takeover — attacker has the colleague's phone. Verify via a second channel (voice call to known number). Never make access changes from unverified text requests."},
+  {scenario:`Your computer shows an alert: 'VIRUS DETECTED! Call Microsoft Support: 1-800-555-0199 immediately!' The screen is locked and making beeping sounds.`,choices:["Call the number immediately","Pay the fee to unlock — you need your computer","Force-restart your computer and run legitimate antivirus","Unplug the network cable then call IT"],correct:3,why:"Tech support scam / scareware. Microsoft never locks your screen or calls you. Force-restart breaks the scareware. Then report to IT before going online again."},
+];
+
+// ========================================
+// GAME: PHISH OR LEGIT
+// ========================================
+let polIdx2=0,polScore2=0,polStreak2=0,polTimer2=null,polAnswered=false;
+
+function openGame(g){
+  if(g==='pol') initPOL();
+  else if(g==='url') initURL();
+  else if(g==='atq') initATQ();
+  else if(g==='se') initSE();
+  document.getElementById('modal-'+g).classList.add('open');
+}
+function closeGame(g){
+  document.getElementById('modal-'+g).classList.remove('open');
+  if(g==='pol')clearInterval(polTimer2);
+  if(g==='url')clearInterval(urlTimer2);
+}
+
+function initPOL(){
+  polIdx2=0;polScore2=0;polStreak2=0;polAnswered=false;
+  clearInterval(polTimer2);
+  document.getElementById('pol-score').textContent='0 pts';
+  document.getElementById('pol-streak').textContent='🔥 0';
+  renderPOL();
+}
+
+function renderPOL(){
+  if(polIdx2>=POL_EMAILS.length){endPOL();return;}
+  polAnswered=false;
+  const em=POL_EMAILS[polIdx2];
+  document.getElementById('pol-round').textContent=`Round ${polIdx2+1}/10`;
+  document.getElementById('pol-card').innerHTML=`<pre style="font-size:11px;line-height:1.7;white-space:pre-wrap;font-family:'Space Mono',monospace">${esc(em.preview)}</pre>`;
+  document.getElementById('pol-fb').style.display='none';
+  let t=8;
+  document.getElementById('pol-timer-lbl').textContent=`⏱ ${t}s`;
+  document.getElementById('pol-prog').style.width='100%';
+  clearInterval(polTimer2);
+  polTimer2=setInterval(()=>{
+    t--;
+    document.getElementById('pol-timer-lbl').textContent=`⏱ ${t}s`;
+    document.getElementById('pol-prog').style.width=(t/8*100)+'%';
+    if(t<=0){clearInterval(polTimer2);if(!polAnswered)polAnswer(null);}
+  },1000);
+}
+
+function polAnswer(isPhish){
+  if(polAnswered)return;
+  polAnswered=true;
+  clearInterval(polTimer2);
+  const em=POL_EMAILS[polIdx2];
+  const ok=isPhish===em.fish;
+  const timeFb=document.getElementById('pol-fb');
+  if(isPhish===null){
+    polStreak2=0;
+    timeFb.style.display='block';
+    timeFb.innerHTML=`<div style="color:var(--red);font-size:12px">⏱ Time's up! It was ${em.fish?'PHISHING 🎣':'LEGITIMATE ✅'}</div><div style="color:var(--muted);font-size:11px;margin-top:4px">${esc(em.why)}</div>`;
+  } else if(ok){
+    const bonus=polStreak2>=2?20:10;
+    polScore2+=bonus;polStreak2++;
+    timeFb.style.display='block';
+    timeFb.innerHTML=`<div style="color:var(--grn);font-size:12px">✅ Correct! +${bonus}pts${polStreak2>=2?' (streak bonus!)':''}</div><div style="color:var(--muted);font-size:11px;margin-top:4px">${esc(em.why)}</div>`;
+  } else {
+    polStreak2=0;
+    timeFb.style.display='block';
+    timeFb.innerHTML=`<div style="color:var(--red);font-size:12px">❌ Wrong! It was ${em.fish?'PHISHING 🎣':'LEGITIMATE ✅'}</div><div style="color:var(--muted);font-size:11px;margin-top:4px">${esc(em.why)}</div>`;
+  }
+  document.getElementById('pol-score').textContent=polScore2+' pts';
+  document.getElementById('pol-streak').textContent='🔥 '+polStreak2;
+  polIdx2++;
+  setTimeout(()=>renderPOL(),1600);
+}
+
+function endPOL(){
+  document.getElementById('pol-card').innerHTML=`<div style="text-align:center;padding:20px">
+    <div style="font-size:40px;margin-bottom:8px">🎉</div>
+    <h3 style="color:var(--pur);margin-bottom:6px">Game Over!</h3>
+    <div style="font-size:28px;font-weight:bold;color:var(--pur)">${polScore2} pts</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">Best streak: ${polStreak2}</div>
+  </div>`;
+  document.getElementById('pol-fb').style.display='none';
+  if(CU){
+    DB.saveGameScore(CU.username,'pol',polScore2);
+    DB.updateGamePoints(CU.username,polScore2);
+    CU=DB.getUser(CU.username);
+    notif(`+${polScore2} pts earned! 🎮`);
+  }
+  renderGameScores();
+}
+
+// ========================================
+// GAME: URL DETECTIVE
+// ========================================
+let urlIdx2=0,urlScore2=0,urlTimer2=null,urlAnswered=false,urlT=12;
+
+function initURL(){
+  urlIdx2=0;urlScore2=0;urlAnswered=false;
+  clearInterval(urlTimer2);
+  document.getElementById('url-score').textContent='0 pts';
+  renderURL();
+}
+
+function renderURL(){
+  if(urlIdx2>=URL_ROUNDS.length){endURL();return;}
+  urlAnswered=false;
+  const r=URL_ROUNDS[urlIdx2];
+  document.getElementById('url-round').textContent=`Round ${urlIdx2+1}/8`;
+  document.getElementById('url-context').textContent=r.ctx;
+  document.getElementById('url-fb').style.display='none';
+  document.getElementById('url-opts').innerHTML=r.opts.map((u,i)=>`
+    <button onclick="urlPick(${i})" style="text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;cursor:pointer;color:var(--text);font-size:11px;font-family:'Space Mono',monospace;width:100%;transition:all .2s;word-break:break-all"
+    onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--border)'">${esc(u)}</button>`).join('');
+  urlT=12;
+  document.getElementById('url-timer-lbl').textContent=`⏱ ${urlT}s`;
+  document.getElementById('url-prog').style.width='100%';
+  clearInterval(urlTimer2);
+  urlTimer2=setInterval(()=>{
+    urlT--;
+    document.getElementById('url-timer-lbl').textContent=`⏱ ${urlT}s`;
+    document.getElementById('url-prog').style.width=(urlT/12*100)+'%';
+    if(urlT<=0){clearInterval(urlTimer2);if(!urlAnswered)urlPick(null);}
+  },1000);
+}
+
+function urlPick(idx){
+  if(urlAnswered)return;
+  urlAnswered=true;
+  clearInterval(urlTimer2);
+  const r=URL_ROUNDS[urlIdx2];
+  const ok=idx===r.bad;
+  const bonus=Math.max(5,Math.floor(urlT/12*20));
+  if(ok)urlScore2+=bonus;
+  const opts=document.getElementById('url-opts').querySelectorAll('button');
+  opts.forEach((b,i)=>{
+    b.disabled=true;
+    if(i===r.bad)b.style.cssText+=';border-color:var(--red);background:rgba(255,51,102,.1);color:var(--red)';
+    else b.style.cssText+=';border-color:var(--grn);background:rgba(0,255,157,.08);color:var(--grn)';
+  });
+  const fb=document.getElementById('url-fb');
+  fb.style.display='block';
+  if(idx===null){fb.innerHTML=`<div style="color:var(--red);font-size:11px">⏱ Time's up! ${esc(r.why)}</div>`;}
+  else if(ok){fb.innerHTML=`<div style="color:var(--grn);font-size:11px">✅ Correct! +${bonus}pts — ${esc(r.why)}</div>`;}
+  else{fb.innerHTML=`<div style="color:var(--red);font-size:11px">❌ Wrong! ${esc(r.why)}</div>`;}
+  document.getElementById('url-score').textContent=urlScore2+' pts';
+  urlIdx2++;
+  setTimeout(()=>renderURL(),1800);
+}
+
+function endURL(){
+  document.getElementById('url-opts').innerHTML=`<div style="text-align:center;padding:20px">
+    <div style="font-size:40px;margin-bottom:8px">🔗</div>
+    <h3 style="color:var(--acc);margin-bottom:6px">Detective Complete!</h3>
+    <div style="font-size:28px;font-weight:bold;color:var(--acc)">${urlScore2} pts</div>
+  </div>`;
+  document.getElementById('url-fb').style.display='none';
+  if(CU){
+    DB.saveGameScore(CU.username,'url',urlScore2);
+    DB.updateGamePoints(CU.username,urlScore2);
+    CU=DB.getUser(CU.username);
+    notif(`+${urlScore2} pts earned! 🎮`);
+  }
+  renderGameScores();
+}
+
+// ========================================
+// GAME: ATTACK TYPE QUIZ
+// ========================================
+let atqIdx2=0,atqScore2=0,atqAnswered=false;
+
+function initATQ(){
+  atqIdx2=0;atqScore2=0;
+  document.getElementById('atq-score').textContent='0 pts';
+  renderATQ();
+}
+
+function renderATQ(){
+  if(atqIdx2>=ATQ_ROUNDS.length){endATQ();return;}
+  atqAnswered=false;
+  const r=ATQ_ROUNDS[atqIdx2];
+  document.getElementById('atq-round').textContent=`Question ${atqIdx2+1}/${ATQ_ROUNDS.length}`;
+  document.getElementById('atq-prog').style.width=(atqIdx2/ATQ_ROUNDS.length*100)+'%';
+  document.getElementById('atq-scenario').textContent=r.scenario;
+  document.getElementById('atq-fb').style.display='none';
+  const sh=[...r.choices].sort(()=>Math.random()-.5);
+  document.getElementById('atq-choices').innerHTML=sh.map(c=>`
+    <button class="atq-choice" onclick="atqPick('${esc(c)}','${esc(r.answer)}')">${esc(c)}</button>`).join('');
+}
+
+function atqPick(choice,answer){
+  if(atqAnswered)return;
+  atqAnswered=true;
+  const ok=choice===answer;
+  if(ok)atqScore2+=15;
+  const r=ATQ_ROUNDS[atqIdx2];
+  document.getElementById('atq-choices').querySelectorAll('.atq-choice').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.trim()===answer)b.classList.add('ok');
+    else if(b.textContent.trim()===choice&&!ok)b.classList.add('no');
+  });
+  const fb=document.getElementById('atq-fb');
+  fb.style.display='block';
+  fb.innerHTML=ok?
+    `<div style="color:var(--grn);font-size:11px">✅ Correct! +15pts — ${esc(r.why)}</div>`:
+    `<div style="color:var(--red);font-size:11px">❌ It was <strong>${esc(answer)}</strong> — ${esc(r.why)}</div>`;
+  document.getElementById('atq-score').textContent=atqScore2+' pts';
+  atqIdx2++;
+  setTimeout(()=>renderATQ(),2000);
+}
+
+function endATQ(){
+  document.getElementById('atq-choices').innerHTML=`<div style="text-align:center;padding:20px">
+    <div style="font-size:40px;margin-bottom:8px">🧩</div>
+    <h3 style="color:var(--grn);margin-bottom:6px">Quiz Complete!</h3>
+    <div style="font-size:28px;font-weight:bold;color:var(--grn)">${atqScore2} pts</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">${atqScore2}/120 possible</div>
+  </div>`;
+  document.getElementById('atq-fb').style.display='none';
+  document.getElementById('atq-prog').style.width='100%';
+  if(CU){
+    DB.saveGameScore(CU.username,'atq',atqScore2);
+    DB.updateGamePoints(CU.username,atqScore2);
+    CU=DB.getUser(CU.username);
+    notif(`+${atqScore2} pts earned! 🎮`);
+  }
+  renderGameScores();
+}
+
+// ========================================
+// GAME: SOCIAL ENGINEERING SURVIVAL
+// ========================================
+let seIdx2=0,seScore2=0,seLives2=3,seAnswered=false;
+
+function initSE(){
+  seIdx2=0;seScore2=0;seLives2=3;seAnswered=false;
+  document.getElementById('se-score').textContent='0 pts';
+  document.getElementById('se-lives').textContent='❤️❤️❤️';
+  renderSE();
+}
+
+function renderSE(){
+  if(seIdx2>=SE_SCENARIOS.length||seLives2<=0){endSE();return;}
+  seAnswered=false;
+  const r=SE_SCENARIOS[seIdx2];
+  document.getElementById('se-round').textContent=`Scenario ${seIdx2+1}/${SE_SCENARIOS.length}`;
+  document.getElementById('se-scenario').textContent=r.scenario;
+  document.getElementById('se-fb').style.display='none';
+  document.getElementById('se-choices').innerHTML=r.choices.map((c,i)=>`
+    <button class="se-choice" onclick="sePick(${i})">${esc(c)}</button>`).join('');
+}
+
+function sePick(idx){
+  if(seAnswered)return;
+  seAnswered=true;
+  const r=SE_SCENARIOS[seIdx2];
+  const ok=idx===r.correct;
+  if(ok){seScore2+=25;}
+  else{seLives2--;document.getElementById('se-lives').textContent='❤️'.repeat(seLives2)+'🖤'.repeat(3-seLives2);}
+  document.getElementById('se-choices').querySelectorAll('.se-choice').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===r.correct)b.classList.add('correct');
+    else if(i===idx&&!ok)b.classList.add('wrong');
+  });
+  const fb=document.getElementById('se-fb');
+  fb.style.display='block';
+  fb.innerHTML=ok?
+    `<div style="color:var(--grn);font-size:11px">✅ Smart move! +25pts — ${esc(r.why)}</div>`:
+    `<div style="color:var(--red);font-size:11px">❌ Compromised! ${seLives2>0?`${seLives2} lives left.`:''} — ${esc(r.why)}</div>`;
+  document.getElementById('se-score').textContent=seScore2+' pts';
+  seIdx2++;
+  if(seLives2<=0){setTimeout(()=>endSE(),2000);}
+  else setTimeout(()=>renderSE(),2000);
+}
+
+function endSE(){
+  document.getElementById('se-choices').innerHTML=`<div style="text-align:center;padding:20px">
+    <div style="font-size:40px;margin-bottom:8px">${seLives2>0?'🕵️':'💀'}</div>
+    <h3 style="color:var(--ylw);margin-bottom:6px">${seLives2>0?'Mission Complete!':'Compromised!'}</h3>
+    <div style="font-size:28px;font-weight:bold;color:var(--ylw)">${seScore2} pts</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">Lives remaining: ${'❤️'.repeat(seLives2)}</div>
+  </div>`;
+  document.getElementById('se-fb').style.display='none';
+  if(CU){
+    DB.saveGameScore(CU.username,'se',seScore2);
+    DB.updateGamePoints(CU.username,seScore2);
+    CU=DB.getUser(CU.username);
+    notif(`+${seScore2} pts earned! 🎮`);
+  }
+  renderGameScores();
+}
+
+function renderGameScores(){
+  const el=document.getElementById('game-scores-list');
+  if(!CU){el.innerHTML=`<p style="color:var(--muted);font-size:12px">Sign in to track your scores</p>`;return;}
+  const gs=DB.getGameScores(CU.username);
+  const games=[{k:'pol',name:'Phish or Legit?',max:200,icon:'🃏',color:'var(--pur)'},
+               {k:'url',name:'URL Detective',max:160,icon:'🔗',color:'var(--acc)'},
+               {k:'atq',name:'Attack Type Quiz',max:120,icon:'🧩',color:'var(--grn)'},
+               {k:'se',name:'SE Survival',max:150,icon:'🕵️',color:'var(--ylw)'}];
+  el.innerHTML=games.map(g=>{
+    const s=gs[g.k]||0;const pct=Math.round(s/g.max*100);
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:12px">${g.icon} ${g.name}</span>
+        <span style="font-size:12px;color:${g.color};font-weight:bold">${s}/${g.max} pts</span>
+      </div>
+      <div class="prog"><div style="height:100%;border-radius:4px;background:${g.color};width:${pct}%;transition:width .6s ease"></div></div>
+    </div>`;
+  }).join('');
+  el.innerHTML+=`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+    <span style="font-size:12px;color:var(--muted)">Total Game Points:</span>
+    <span style="font-size:14px;font-weight:bold;color:var(--pur)">${CU.gamePoints||0} pts</span>
+  </div>`;
+}
+
+// ========================================
+// AI SIMULATOR — ROLE BASED (no API key)
+// ========================================
+function selRole(btn,r){
+  simRole=r;
+  document.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ========================================
+// BUILT-IN SIMULATION SCENARIOS DATABASE
+// ========================================
+const SIM_DB = {
+  'Finance Professional': [
+    {
+      subject: 'URGENT: Wire Transfer Authorization Required — CFO Request',
+      senderDisplay: 'Michael Chen — CFO <m.chen@acmecorp.com>',
+      senderActual: 'spoofed@acme-corp-finance.net',
+      body: `Hi,\n\nI'm currently in a board meeting and need you to process an urgent wire transfer of $47,500 to a new vendor we're onboarding. This is time-sensitive — the deal closes in 2 hours.\n\nPlease transfer funds to:\nBank: First National Trust\nRouting: 021000089\nAccount: 4401928374\nRef: VENDOR-2024-Q4\n\nI'll explain everything after the meeting. Please don't discuss this with anyone else on the team — it's confidential until the contract is signed.\n\nProcess ASAP and confirm by reply.\n\nMichael Chen\nChief Financial Officer`,
+      redFlags: [
+        'Spoofed display name — actual sending domain is "acme-corp-finance.net", not the real company domain',
+        'Extreme urgency + secrecy combo: "don\'t discuss with anyone" is a classic pressure tactic',
+        'CFO asking directly for wire transfer bypasses normal approval processes',
+        'Unusual bank account with no prior vendor relationship or PO number',
+        'Request sent via email, not through official procurement or ERP system'
+      ],
+      explanation: 'This is a CEO/CFO fraud (Business Email Compromise). Attackers spoof executive email display names to bypass suspicion. The "confidentiality" request isolates the target so they can\'t verify the request with colleagues. Finance teams are prime targets because they have direct access to payment systems.'
+    },
+    {
+      subject: 'Your Q3 Expense Report — Action Required Before Payroll Cutoff',
+      senderDisplay: 'HR Payroll System <payroll@company-hr-portal.com>',
+      senderActual: 'auto@company-hr-portal.com',
+      body: `Dear Finance Team Member,\n\nOur records show your Q3 expense reimbursement of $2,847.00 is pending final verification. Payroll closes TONIGHT at 11:59 PM.\n\nTo receive your reimbursement on time, you must verify your direct deposit information through our secure portal:\n\n🔗 Verify My Account → https://payroll-verify.company-hr-portal.com/auth\n\nYou'll need:\n• Employee ID\n• Last 4 digits of SSN\n• Current bank account number\n\nFailure to verify will delay payment until next quarter.\n\nHR Payroll Department`,
+      redFlags: [
+        'Domain "company-hr-portal.com" is not the real company\'s domain — it\'s a lookalike',
+        'Asking for SSN digits + bank account number via a link is never legitimate HR practice',
+        'Artificial deadline ("tonight at 11:59 PM") designed to prevent careful thinking',
+        'Link subdomain (payroll-verify.) is a common trick to make fake domains look official',
+        'Legitimate payroll systems never ask you to re-enter bank details via email link'
+      ],
+      explanation: 'This targets finance employees\' trust in payroll systems. The fake domain mimics corporate HR portals. Combining SSN digits with bank account numbers gives attackers enough to commit identity theft or account takeover. The quarterly deadline exploits real payroll cycles to seem credible.'
+    }
+  ],
+  'Software Engineer': [
+    {
+      subject: 'Security Alert: Suspicious login detected on your GitHub account',
+      senderDisplay: 'GitHub Security <security@github.com>',
+      senderActual: 'noreply@github-security-alert.io',
+      body: `Hi there,\n\nWe detected a sign-in to your GitHub account from an unrecognized device:\n\nLocation: Kyiv, Ukraine\nDevice: Windows 11 / Chrome\nTime: Today at 03:14 AM UTC\nIP: 185.220.101.47\n\nIf this wasn't you, your account may be compromised. Secure your account immediately:\n\n🔐 Secure My Account → https://github-account-verify.io/secure?token=a8f2k9\n\nIf you don't act within 24 hours, your repositories may be locked as a precaution.\n\nGitHub Security Team`,
+      redFlags: [
+        'Sending domain is "github-security-alert.io" — GitHub only sends from @github.com',
+        'The "Secure My Account" link goes to "github-account-verify.io", not github.com',
+        'Threatening repository lockdown creates panic — GitHub doesn\'t do this via email',
+        '24-hour countdown is a pressure tactic to prevent you from thinking clearly',
+        'Real GitHub security alerts never ask you to click a link to "secure" your account'
+      ],
+      explanation: 'Engineers trust GitHub deeply and fear losing code access. Attackers register similar-looking domains like "github-account-verify.io" to harvest credentials. Once they have your GitHub token or password, they can steal proprietary code, inject malicious commits, or pivot to cloud infrastructure credentials stored in repos.'
+    },
+    {
+      subject: 'You\'ve been invited to collaborate on a private npm package',
+      senderDisplay: 'npm Registry <npm@npmjs.com>',
+      senderActual: 'invite@npm-registry-notify.com',
+      body: `Hello Developer,\n\nA colleague has invited you to collaborate on a private npm package:\n\nPackage: @internal/auth-utils\nInvited by: sarah.kim@yourcompany.com\nAccess level: Maintainer\n\nTo accept this invitation and gain publish access, verify your npm credentials:\n\n📦 Accept Invitation → https://www.npmjs-collab.com/invite/accept?id=inv_9f2k1\n\nThis invitation expires in 48 hours. If you believe this was sent in error, you can safely ignore this message.\n\nnpm Team`,
+      redFlags: [
+        'Sender domain is "npm-registry-notify.com" — official npm emails come from npmjs.com',
+        'The link goes to "npmjs-collab.com" (note the hyphen) — not the real npmjs.com',
+        'Maintainer access means publish rights — attackers want to inject malicious code',
+        'Legitimate npm invitations don\'t ask you to "verify credentials" to accept',
+        'Impersonating a real colleague\'s email address adds false trust'
+      ],
+      explanation: 'Supply chain attacks via npm are a major threat. By gaining maintainer access to packages — especially internal auth libraries — attackers can push malicious updates that ship in your production builds. The "@internal" package name makes it feel like a real internal tool. Always accept npm invitations directly from the npm website dashboard, never via email links.'
+    }
+  ],
+  'HR Manager': [
+    {
+      subject: 'New I-9 Compliance Requirement — All HR Managers Must Complete by Friday',
+      senderDisplay: 'U.S. Citizenship and Immigration Services <uscis-compliance@uscis.gov.us-docs.com>',
+      senderActual: 'alert@uscis.gov.us-docs.com',
+      body: `Dear HR Professional,\n\nEffective immediately, USCIS has updated Form I-9 verification procedures. All HR Managers are required to complete a compliance recertification to maintain your authorization to process employee I-9 forms.\n\nFailure to complete recertification by this Friday may result in:\n• Loss of I-9 processing authorization\n• Potential employer fines up to $25,000\n• Audit flags on your organization's employment records\n\nComplete your recertification now:\n🏛️ Access USCIS Compliance Portal → https://uscis-hr-recert.us-docs.com/login\n\nYou will need your HR credentials and employer EIN.\n\nU.S. Citizenship and Immigration Services\nCompliance Division`,
+      redFlags: [
+        'Real USCIS emails come from @uscis.gov only — "us-docs.com" is a fake lookalike domain',
+        'The link goes to "uscis-hr-recert.us-docs.com" — never .gov.us-docs.com',
+        'USCIS does not send recertification requirements via unsolicited email',
+        'Asking for HR credentials AND employer EIN together is a serious data theft attempt',
+        'The threat of fines and audit flags creates panic to override rational judgment'
+      ],
+      explanation: 'HR managers are targeted because they hold sensitive employee data and are responsible for compliance. Attackers impersonate government agencies (USCIS, IRS, DOL) knowing HR teams fear regulatory consequences. The EIN + HR credential combo gives attackers access to payroll systems and can enable tax fraud or mass employee data theft.'
+    },
+    {
+      subject: 'Candidate Background Check — Document Submission Required',
+      senderDisplay: 'Sterling Background Checks <results@sterlingcheck.com>',
+      senderActual: 'results@sterlingcheck-portal.com',
+      body: `Dear Hiring Manager,\n\nA background check for your recent candidate has been completed. Due to a document verification issue, we need you to log in and provide authorization before we can release the final report.\n\nCandidate: [CANDIDATE NAME PENDING]\nCheck Type: Standard Employment + Criminal\nStatus: ⚠ Authorization Hold\n\nPlease log in with your Sterling account to resolve:\n🔍 View Report & Authorize → https://portal.sterlingcheck-portal.com/auth/resolve\n\nThis hold will expire in 12 hours. After expiration, a new background check order will be required, potentially delaying your hire.\n\nSterling Customer Support`,
+      redFlags: [
+        'Domain is "sterlingcheck-portal.com" — Sterling\'s real domain is sterlingcheck.com only',
+        'Vague "CANDIDATE NAME PENDING" means this is a mass phishing blast, not a real report',
+        'Legitimate background check platforms don\'t require "authorization" via email link',
+        '12-hour expiry creates urgency that prevents verifying through proper channels',
+        'HR managers in hiring mode are primed to act fast on candidate-related emails'
+      ],
+      explanation: 'This exploits HR managers during active hiring periods when they\'re juggling multiple candidates. The attacker registers a domain that looks like a real vendor portal. Once they have Sterling (or similar platform) credentials, they can access sensitive candidate data including SSNs, addresses, and criminal histories for all checked employees.'
+    }
+  ],
+  'C-Suite Executive': [
+    {
+      subject: 'Board Portal Access — Emergency Security Update Required',
+      senderDisplay: 'Diligent Boards <support@diligent.com>',
+      senderActual: 'admin@diligent-boardroom.net',
+      body: `Dear Executive,\n\nAs part of our ongoing security upgrades, all board portal users are required to re-authenticate their accounts before the next board meeting.\n\nYour current session will be invalidated on: Tomorrow at 9:00 AM\n\nPlease re-authenticate now to maintain uninterrupted access to:\n• Board meeting materials\n• Confidential resolutions\n• Financial summaries\n\n🔐 Re-authenticate My Account → https://boardroom.diligent-boardroom.net/reauth\n\nIf you have difficulty, please reply directly to this email and our team will assist.\n\nDiligent Support Team\n1-800-XXX-XXXX`,
+      redFlags: [
+        '"diligent-boardroom.net" is a fake domain — the real Diligent sends from diligentboards.com',
+        'Board portals don\'t force re-authentication 24 hours before meetings via email',
+        'The "reply directly" option lets attackers establish a social engineering conversation',
+        'Timing the attack before a board meeting exploits peak stress and distraction',
+        'Access to board materials and financial summaries is extremely high-value to attackers'
+      ],
+      explanation: 'Executives are "whale" targets — the payoff from compromising a C-Suite account is enormous. Board portal credentials give access to merger discussions, financial results before public release, and strategic plans. Attackers time these attacks around real board meeting schedules (often publicly available) to maximize urgency and legitimacy.'
+    }
+  ],
+  'Healthcare Worker': [
+    {
+      subject: 'Critical: Patient EHR Access Suspended — Immediate Action Required',
+      senderDisplay: 'Epic Systems IT <itsupport@epic-health.com>',
+      senderActual: 'helpdesk@epic-health-support.org',
+      body: `Dear Healthcare Provider,\n\nDue to an unusual access pattern detected on your account, your Epic EHR access has been temporarily suspended as a security precaution.\n\nAffected Systems:\n• Epic MyChart Provider\n• Patient scheduling\n• ePrescribing (DEA authorization)\n\nTo restore your access before your next shift, please verify your identity:\n\n🏥 Restore EHR Access → https://provider-verify.epic-health-support.org/restore\n\nYou will need your Epic username, password, and NPI number.\n\nThis is time-sensitive. Unverified accounts are permanently deactivated after 48 hours.\n\nEpic IT Security Team`,
+      redFlags: [
+        '"epic-health-support.org" is fake — Epic sends from epiccare.com or your hospital\'s domain',
+        'Asking for Epic username + password + NPI number via link is credential harvesting',
+        'Threatening ePrescribing suspension creates extreme urgency (patient safety fears)',
+        'Real EHR systems restore access through IT helpdesk, never via email links',
+        '48-hour permanent deactivation threat is designed to bypass rational thinking'
+      ],
+      explanation: 'Healthcare workers are high-value targets because EHR access enables prescription fraud (opioids), patient data theft (insurance fraud), and ransomware staging. The ePrescribing threat is especially effective — healthcare workers fear anything that could disrupt patient care. NPI numbers combined with credentials enable DEA registration fraud.'
+    }
+  ],
+  'University Student': [
+    {
+      subject: 'Financial Aid Disbursement — Verify Your Account to Receive $3,200',
+      senderDisplay: 'Student Financial Services <finaid@university-studentaid.edu>',
+      senderActual: 'disbursement@university-studentaid.net',
+      body: `Dear Student,\n\nYour financial aid disbursement of $3,200.00 is ready for processing. To receive your funds, you must verify your student account and confirm your direct deposit information.\n\nDisbursement Deadline: 3 Business Days\n\nVerify your account at:\n💰 Claim My Disbursement → https://aid-portal.university-studentaid.net/claim\n\nYou will need:\n• Student ID number\n• Date of birth\n• Current bank account and routing number\n\nFunds not claimed within 3 business days will be returned to the federal program.\n\nStudent Financial Services`,
+      redFlags: [
+        'Domain ".net" vs real university ".edu" — financial aid always comes from official .edu domains',
+        'Legitimate financial aid never asks for bank details via email — it\'s already on file',
+        'Asking for Student ID + date of birth + bank account = identity theft combo',
+        '"3 business days" deadline mimics real disbursement windows to seem credible',
+        'No personalization — "Dear Student" shows this is a mass phishing blast'
+      ],
+      explanation: 'Students are targeted during known financial aid disbursement periods (August/January). The promise of money they\'re legitimately expecting lowers suspicion. Student ID + date of birth + bank details is a complete package for opening fraudulent credit lines in the student\'s name, often not discovered until graduation when credit checks begin.'
+    }
+  ],
+  'IT Administrator': [
+    {
+      subject: 'Azure AD: Multiple failed MFA attempts — Admin account at risk',
+      senderDisplay: 'Microsoft Azure <azure-security@microsoft.com>',
+      senderActual: 'alert@azure-security-notify.com',
+      body: `Hello Administrator,\n\nWe've detected 14 failed Multi-Factor Authentication attempts on your Azure AD global administrator account in the past 2 hours.\n\nSource IPs: 195.178.120.44, 185.220.101.33 (Tor exit nodes)\nAttempt type: Password spray attack\nAccount: admin@yourdomain.com\n\nYour account has NOT been locked — attackers may still be attempting access.\n\nSecure your tenant immediately:\n🛡️ Review & Secure Tenant → https://admin.azure-security-notify.com/protect\n\nYou can also revoke all active sessions from this link.\n\nMicrosoft Security Response Center`,
+      redFlags: [
+        '"azure-security-notify.com" is not a Microsoft domain — Microsoft uses microsoft.com, azurewebsites.net only',
+        'Real Microsoft security alerts direct you to portal.azure.com, never a third-party domain',
+        'The Tor exit node IPs create panic — this technical detail is added to seem credible',
+        'IT admins trained to respond urgently to security incidents are most likely to click fast',
+        'Clicking "revoke all sessions" on a fake site would give attackers your admin credentials'
+      ],
+      explanation: 'Global Admin accounts are the crown jewel of a Microsoft 365 tenant. Attackers use technical-sounding details (Tor IPs, password spray terminology) to bypass the skepticism of IT-savvy targets. A compromised Global Admin account gives access to all user data, email, SharePoint, and the ability to create backdoor accounts across the entire organization.'
+    }
+  ],
+  'Legal / Compliance': [
+    {
+      subject: 'Subpoena Notice — Legal Hold Order #2024-CR-08841',
+      senderDisplay: 'U.S. District Court — SDNY <ecf@nyed.uscourts.gov.court-notify.com>',
+      senderActual: 'filing@nyed.uscourts.gov.court-notify.com',
+      body: `LEGAL NOTICE\n\nTo the Legal Department:\n\nPursuant to Federal Rules of Civil Procedure Rule 45, you are hereby notified of a legal hold requirement in connection with Case No. 2024-CR-08841.\n\nYour organization has been named as a party of interest. You are required to:\n1. Preserve all relevant electronic records immediately\n2. Download and review the attached subpoena documents\n3. Respond to the court within 72 hours\n\n📄 Access Subpoena Documents → https://ecf.court-notify.com/case/2024-CR-08841/docs\n\nFailure to comply may result in contempt sanctions.\n\nU.S. District Court Clerk\nEastern District of New York`,
+      redFlags: [
+        'Real USCOURTS emails come from @uscourts.gov only — "court-notify.com" is a fake lookalike',
+        'The ECF link goes to "ecf.court-notify.com" — legitimate court filings use ecf.nyed.uscourts.gov',
+        'Real subpoenas are served in person or via certified mail — not email links to downloads',
+        '72-hour compliance window triggers compliance professionals\' fear of sanctions',
+        'No docket number format matching real SDNY cases (real format: 24-cv-XXXXX)'
+      ],
+      explanation: 'Legal and compliance professionals are trained to take legal notices extremely seriously, making them prime targets. The threat of contempt sanctions overrides normal skepticism. Attackers research real court case number formats and district abbreviations to add legitimacy. The goal is often to install malware via "subpoena document" downloads or harvest legal portal credentials.'
+    }
+  ]
+};
+
+function runSim(){
+  const btn=document.getElementById('sim-btn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> Generating...';
+  document.getElementById('sim-out').innerHTML=`<div class="card" style="text-align:center;padding:36px">
+    <span class="spinner" style="width:22px;height:22px;border-width:3px"></span>
+    <div style="color:var(--muted);margin-top:12px;font-size:12px">Generating phishing scenario for ${esc(simRole)}...</div>
+  </div>`;
+
+  setTimeout(()=>{
+    try{
+      const pool = SIM_DB[simRole] || SIM_DB['Finance Professional'];
+      const sc = pool[Math.floor(Math.random()*pool.length)];
+      const safe = sc.senderDisplay === sc.senderActual;
+
+      document.getElementById('sim-out').innerHTML=`
+        <div class="card email-box">
+          <div style="margin-bottom:9px;padding:6px 11px;background:rgba(255,204,0,.09);border:1px solid rgba(255,204,0,.32);border-radius:6px;font-size:10px;color:var(--ylw)">
+            ⚠ SIMULATION — Training purposes only. This is a fictional phishing example.
+          </div>
+          <div class="email-hdr">
+            <div class="ef"><span class="el">FROM:</span>
+              <span class="xr"><span class="xr-lnk">${esc(sc.senderDisplay)}</span>
+                <div class="xr-tip"><div class="xr-ttl">⚠ X-RAY: ACTUAL SENDER</div>
+                  <div class="xr-row"><span class="xr-ml">Display: </span>${esc(sc.senderDisplay)}</div>
+                  <div class="xr-row"><span class="xr-ml">Actual: </span><span class="${safe?'xr-good':'xr-bad'}">${esc(sc.senderActual)}</span></div>
+                  ${!safe?'<div class="xr-warn">🚨 DOMAIN MISMATCH DETECTED</div>':'<div class="xr-safe">✅ Sender matches</div>'}
+                </div>
+              </span>
+            </div>
+            <div class="ef"><span class="el">SUBJECT:</span><span style="font-weight:bold;font-size:13px">${esc(sc.subject)}</span></div>
+          </div>
+          <div class="ebody" style="white-space:pre-line">${esc(sc.body)}</div>
+        </div>
+        <div class="rf-panel" style="margin-top:13px">
+          <h4 style="color:var(--red);font-size:12px;margin-bottom:9px">🚩 RED FLAGS — ${sc.redFlags.length} indicators detected:</h4>
+          ${sc.redFlags.map((f,i)=>`<div class="rf-item"><div class="rf-dot" style="background:var(--red);flex-shrink:0"></div><span style="font-size:12px;color:var(--text)"><strong style="color:var(--ylw)">Flag ${i+1}:</strong> ${esc(f)}</span></div>`).join('')}
+        </div>
+        <div class="card" style="margin-top:13px;background:rgba(0,200,255,.05);border-color:rgba(0,200,255,.22)">
+          <strong style="color:var(--acc);font-size:11px">💡 WHY THIS ATTACK WORKS: </strong>
+          <span style="font-size:12px;color:var(--text);line-height:1.75">${esc(sc.explanation)}</span>
+        </div>
+        <div style="margin-top:13px;display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn" onclick="runSim()" style="font-size:12px;padding:8px 18px">🔄 Generate Another</button>
+          <button class="btn btn-g" onclick="go('quiz')" style="font-size:12px;padding:8px 18px">Test Your Skills →</button>
+        </div>`;
+    }catch(e){
+      document.getElementById('sim-out').innerHTML=`<div class="card" style="border-color:rgba(255,51,102,.35);padding:26px;text-align:center">
+        <div style="color:var(--red);font-size:14px;margin-bottom:8px">⚠ Error generating scenario</div>
+        <div style="color:var(--muted);font-size:12px">${esc(e.message)}</div>
+      </div>`;
+    }
+    btn.disabled=false;
+    btn.innerHTML='🤖 Generate AI Phishing Scenario';
+  }, 900);
+}
+
+// ========================================
+// SIMULATOR TAB SWITCH
+// ========================================
+function switchSimTab(tab){
+  document.getElementById('sim-tab-role').classList.toggle('on',tab==='role');
+  document.getElementById('sim-tab-custom').classList.toggle('on',tab==='custom');
+  document.getElementById('sim-pane-role').style.display=tab==='role'?'block':'none';
+  document.getElementById('sim-pane-custom').style.display=tab==='custom'?'block':'none';
+}
+
+// ========================================
+// CUSTOM SIMULATOR (API key required)
+// ========================================
+async function pgGenerateScenario(){
+  const apiKey=document.getElementById('pgApiKey').value.trim();
+  const attackType=document.getElementById('pgAttackType').value;
+  const target=document.getElementById('pgTarget').value;
+  const context=document.getElementById('pgContext').value.trim();
+  const output=document.getElementById('pg-output-area');
+  const btn=document.getElementById('pgGenerateBtn');
+
+  if(!apiKey){
+    output.className='';
+    output.innerHTML=`<div style="color:var(--red);font-size:.8rem">⚠ ERROR: No API key provided.\n\nPlease paste your Anthropic API key in the field above.</div>`;
+    return;
+  }
+
+  btn.disabled=true;
+  output.className='';
+  output.innerHTML=`<div style="display:flex;align-items:center;gap:.75rem;color:var(--acc);font-size:.8rem"><span class="spinner"></span>Generating ${attackType} scenario…</div>`;
+
+  const prompt=`You are a cybersecurity awareness trainer. Generate a realistic ${attackType} phishing scenario targeting ${target}.
+${context?`Additional context: ${context}`:''}
+
+Format your response with these sections:
+SCENARIO OVERVIEW — Brief description of the attack
+ATTACK SCRIPT/MESSAGE — The actual phishing content (call script, SMS, email, etc.)
+RED FLAGS — 3-4 specific things the target should notice
+CORRECT RESPONSE — What the target should do
+
+Keep it educational, realistic, and concise. This is for security awareness training only.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error?.message||`API Error ${res.status}`);
+    const text=data.content?.[0]?.text||'No response generated.';
+    output.className='has-content';
+    output.textContent=text;
+  }catch(err){
+    output.className='';
+    output.innerHTML=`<div style="color:var(--red);font-size:.8rem">⚠ ERROR: ${err.message}\n\nCheck your API key. Make sure it starts with "sk-ant-"</div>`;
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+// ========================================
+// REPORT
+// ========================================
+async function doReport(){
+  const txt=document.getElementById('rep-txt').value.trim();
+  if(!txt){notif('Paste an email first','err');return;}
+  const btn=document.getElementById('rep-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Analyzing...';
+  document.getElementById('rep-out').innerHTML=`<div class="card" style="text-align:center;padding:32px">
+    <span class="spinner" style="width:22px;height:22px;border-width:3px"></span>
+    <div style="color:var(--muted);margin-top:11px;font-size:12px">AI threat analysis in progress...</div>
+  </div>`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:800,
+        messages:[{role:'user',content:`Analyze this email for phishing. Return ONLY valid JSON:
+{"verdict":"PHISHING","confidence":85,"redFlags":["flag1","flag2"],"safeIndicators":["safe1"],"recommendation":"what to do","explanation":"2-3 sentence analysis"}
+
+Email to analyze:
+${txt}`}]
+      })
+    });
+    const data=await r.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content[0].text.replace(/```json|```/g,'').trim();
+    const res=JSON.parse(raw);
+    const vCol={PHISHING:'var(--red)',LEGITIMATE:'var(--grn)',SUSPICIOUS:'var(--ylw)'};
+    const vEmoji={PHISHING:'🎣',LEGITIMATE:'✅',SUSPICIOUS:'⚠️'};
+    const vClass={PHISHING:'border:2px solid var(--red);background:rgba(255,51,102,.1)',LEGITIMATE:'border:2px solid var(--grn);background:rgba(0,255,157,.1)',SUSPICIOUS:'border:2px solid var(--ylw);background:rgba(255,204,0,.1)'};
+    document.getElementById('rep-out').innerHTML=`<div class="card">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="${vClass[res.verdict]||vClass.SUSPICIOUS};padding:8px 20px;border-radius:8px;font-weight:bold;font-size:17px;color:${vCol[res.verdict]||'var(--ylw)'}">${vEmoji[res.verdict]||'⚠️'} ${res.verdict}</div>
+        <div><div style="font-size:10px;color:var(--muted)">AI CONFIDENCE</div><div style="font-size:22px;font-weight:bold;color:${vCol[res.verdict]||'var(--ylw)'}">${res.confidence}%</div></div>
+      </div>
+      <p style="color:var(--text);font-size:13px;line-height:1.75;margin-bottom:16px">${esc(res.explanation)}</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">
+        ${res.redFlags&&res.redFlags.length?`<div style="background:rgba(255,51,102,.06);border:1px solid rgba(255,51,102,.22);border-radius:8px;padding:11px">
+          <h4 style="color:var(--red);font-size:11px;margin-bottom:7px">🚩 Red Flags</h4>
+          ${res.redFlags.map(f=>`<div style="font-size:11px;margin-bottom:4px">• ${esc(f)}</div>`).join('')}
+        </div>`:''}
+        ${res.safeIndicators&&res.safeIndicators.length?`<div style="background:rgba(0,255,157,.06);border:1px solid rgba(0,255,157,.22);border-radius:8px;padding:11px">
+          <h4 style="color:var(--grn);font-size:11px;margin-bottom:7px">✅ Safe Signs</h4>
+          ${res.safeIndicators.map(f=>`<div style="font-size:11px;margin-bottom:4px">• ${esc(f)}</div>`).join('')}
+        </div>`:''}
+      </div>
+      <div style="background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.22);border-radius:8px;padding:11px">
+        <strong style="color:var(--acc);font-size:11px">📋 RECOMMENDATION: </strong>
+        <span style="color:var(--text);font-size:12px">${esc(res.recommendation)}</span>
+      </div>
+    </div>`;
+    repHist.push({txt:txt.slice(0,80)+'...',verdict:res.verdict,conf:res.confidence});
+    renderRepHist();
+  }catch(e){
+    document.getElementById('rep-out').innerHTML=`<div class="card" style="border-color:rgba(255,51,102,.35);text-align:center;padding:24px">
+      <div style="color:var(--red);font-size:14px">⚠ Analysis failed</div>
+      <div style="color:var(--muted);font-size:11px;margin-top:6px">${esc(e.message||'Please try again')}</div>
+    </div>`;
+  }
+  btn.disabled=false;btn.innerHTML='🔍 Analyze with AI';
+}
+
+function renderRepHist(){
+  if(!repHist.length)return;
+  const vc={PHISHING:'var(--red)',LEGITIMATE:'var(--grn)',SUSPICIOUS:'var(--ylw)'};
+  document.getElementById('rep-hist').innerHTML=`<div class="card"><h3 style="font-size:13px;margin-bottom:13px">📋 Recent Reports (${repHist.length})</h3>`+
+    repHist.slice(-5).reverse().map(r=>`
+    <div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid rgba(0,200,255,.05);align-items:flex-start">
+      <span style="font-size:11px;color:${vc[r.verdict]||'var(--ylw)'};white-space:nowrap">${r.verdict==='PHISHING'?'🎣':r.verdict==='LEGITIMATE'?'✅':'⚠️'} ${r.verdict}</span>
+      <div><div style="font-size:11px;color:var(--text)">${esc(r.txt)}</div>
+      <div style="font-size:10px;color:var(--muted)">${r.conf}% confidence</div></div>
+    </div>`).join('')+'</div>';
+}
+
+// ========================================
+// UTILS
+// ========================================
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ========================================
+// INIT
+// ========================================
+(function init(){
+  const tm=localStorage.getItem('ps_tm')||'dark';
+  setTheme(tm);
+  restoreSession();
+  document.querySelectorAll('.modal-bg').forEach(m=>{
+    m.addEventListener('click',e=>{if(e.target===m){const id=m.id.replace('modal-','');closeGame(id);}});
+  });
+})();
+</script>
+</body>
+</html>
