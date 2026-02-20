@@ -1,6 +1,6 @@
 # 🛡️ PhishShield — Advanced Phishing Awareness Platform
 
-> *"The False Bottom" — Learn to spot deception hiding beneath every email, call, and link.*
+> *"The False Bottom" — The world's most advanced phishing detection training platform.Learn to spot deception hiding beneath every email, call, and link.*
 
 ![PhishShield Banner](https://img.shields.io/badge/PhishShield-v2.0-00c8ff?style=for-the-badge&logo=shield&logoColor=white)
 ![HTML](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
@@ -83,22 +83,22 @@ Deep-dive into **8 attack vectors** with visual mock-UIs, real-world examples, a
 ### Option 1 — Open directly (simplest)
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/phishshield.git
+git clone https://github.com/saranya866/PhishShield.git
 
 # Open in your browser
-open phishshield/index.html
+open PhishShield/index.html
 ```
 
 ### Option 2 — GitHub Pages (recommended for sharing)
 1. Fork this repository
 2. Go to **Settings → Pages**
 3. Set source to **main branch / root**
-4. Your site will be live at `https://your-username.github.io/phishshield`
+4. Your site will be live at `https://saranya866.github.io/PhishShield`
 
 ### Option 3 — Local server
 ```bash
 # Using Python
-cd phishshield
+cd PhishShield
 python -m http.server 8080
 # Visit http://localhost:8080
 
@@ -137,7 +137,6 @@ phishshield/
 ├── .gitignore          # Git ignore rules
 │
 └── docs/
-    ├── screenshots/    # App screenshots for README
     └── SECURITY.md     # Security policy & responsible disclosure
 ```
 
@@ -205,11 +204,11 @@ Free to use, modify, and distribute for educational purposes.
 
 ## ⚠️ Disclaimer
 
-PhishShield is built **exclusively for security awareness training and education**. All phishing examples are simulated and fictional. Do not use this tool or its content for any malicious purpose.
+Built for Security Awareness Training. Not for malicious use.
 
 ---
 
 <div align="center">
   <strong>🛡️ PhishShield // THE FALSE BOTTOM</strong><br>
-  <em>AI-Powered Cybersecurity Education · Built with ❤️ for a safer internet</em>
+  <em>AI-Powered Cybersecurity Education · Crafted with ❤️ by TEAM CLICK-BAIT-ER (Don't take the bait) 
 </div>
