@@ -15,13 +15,7 @@
 
 > **[▶ Launch PhishShield](https://your-username.github.io/phishshield)**
 
----
 
-## 📸 Screenshots
-
-| Home | Quiz | Games | Encyclopedia |
-|------|------|-------|--------------|
-| ![Home](docs/screenshots/home.png) | ![Quiz](docs/screenshots/quiz.png) | ![Games](docs/screenshots/games.png) | ![Encyclopedia](docs/screenshots/encyclopedia.png) |
 
 ---
 
