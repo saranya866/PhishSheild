@@ -178,19 +178,6 @@ Traditional security training is boring. PhishShield makes it interactive, gamif
 - API keys are session-only and never persisted
 - Designed for educational use only — no real phishing infrastructure
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-Ideas for contributions:
-- [ ] More quiz scenarios
-- [ ] Additional game modes
-- [ ] Multilingual support (i18n)
-- [ ] Mobile PWA support
-- [ ] Export training certificate as PDF
-- [ ] Team/organization mode
 
 ---
 
