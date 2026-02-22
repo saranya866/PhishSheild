@@ -20,7 +20,7 @@ PhishShield is an **educational tool** built for cybersecurity awareness trainin
 If you discover a security vulnerability in PhishShield itself (e.g., XSS in the app, localStorage injection, etc.), please **do not** open a public GitHub issue.
 
 Instead:
-1. Email: `security@your-domain.com`
+1. Email: `kitsaranya08@gmail.com`
 2. Include: description, steps to reproduce, impact assessment
 3. We'll respond within 48 hours and credit you in the fix
 
